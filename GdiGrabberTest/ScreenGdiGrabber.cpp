@@ -115,7 +115,6 @@ void CScreenGdiGrabber::GrabThreadProc()
 		int64_t interval_tick = GetCurrentTickCount() -last_tick_count_;
 		while (interval_tick < frame_interval_tick_)
 		{
-			Sleep(1);
 			interval_tick = GetCurrentTickCount() -last_tick_count_;
 		}
 		last_tick_count_ = GetCurrentTickCount();

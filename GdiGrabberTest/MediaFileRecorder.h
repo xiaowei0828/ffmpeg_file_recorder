@@ -101,6 +101,8 @@ private:
 	uint8_t* m_pInPicBuffer;
 	AVFrame* m_pAudioFrame;
 
+	SwsContext* m_pConvertCtx;
+
 	uint8_t* m_pAudioBuffer;
 	int m_nAudioSize;
 
@@ -116,6 +118,10 @@ private:
 	int64_t m_nAudioFrameIndex;
 
 	std::thread m_WriteFileThread;
+
+
+	int64_t m_nWriteFrame;
+	int64_t m_nDiscardFrame;
 	
 };
 
