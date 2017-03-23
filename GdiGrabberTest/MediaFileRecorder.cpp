@@ -362,7 +362,7 @@ void CMediaFileRecorder::FillAudio(const void* audioSamples,
 		src_ch_layout = AV_CH_LAYOUT_STEREO;
 	else
 	{
-		OutputDebugStringA("Invalid nChannels in FillAudio");
+		OutputDebugStringA("Invalid nChannels in FillAudio. \n");
 		return;
 	}
 
@@ -373,14 +373,14 @@ void CMediaFileRecorder::FillAudio(const void* audioSamples,
 		src_sample_fmt = AV_SAMPLE_FMT_S32;
 	else
 	{
-		OutputDebugStringA("Invalid nBytesPerSample in FillAudio");
+		OutputDebugStringA("Invalid nBytesPerSample in FillAudio. \n");
 		return;
 	}
 
 	SwrContext* swr_ctx = swr_alloc();
 	if (!swr_ctx)
 	{
-		OutputDebugStringA("swr_alloc failed in FillAudio");
+		OutputDebugStringA("swr_alloc failed in FillAudio. \n");
 		return;
 	}
 
@@ -401,7 +401,53 @@ void CMediaFileRecorder::FillAudio(const void* audioSamples,
 
 	if (swr_init(swr_ctx) < 0)
 	{
-		OutputDebugStringA("swr_init failed in FillAudio");
+		OutputDebugStringA("swr_init failed in FillAudio. \n");
+		return;
+	}
+
+	int max_dst_nb_samples = 0;
+	int dst_nb_samples = 0;
+	max_dst_nb_samples = dst_nb_samples = av_rescale_rnd(src_nb_samples,
+		m_pAudioCodecCtx->sample_rate, src_rate, AV_ROUND_UP);
+
+	uint8_t** dst_data = NULL;
+	int src_linesize, dst_linsize;
+	if (av_samples_alloc_array_and_samples(&dst_data, &dst_linsize, 
+		m_pAudioCodecCtx->channels, dst_nb_samples, m_pAudioCodecCtx->sample_fmt, 0) < 0)
+	{
+		OutputDebugStringA("av_samples_alloc_array_and_samples failed. \n");
+		return;
+	}
+
+	dst_nb_samples = av_rescale_rnd(swr_get_delay(swr_ctx, src_rate) + 
+		src_nb_samples, m_pAudioCodecCtx->sample_rate, src_rate, AV_ROUND_UP);
+	if (dst_nb_samples <= 0)
+	{
+		OutputDebugStringA("av_rescale_rnd failed. \n");
+		return;
+	}
+
+	if (dst_nb_samples > max_dst_nb_samples)
+	{
+		av_free(dst_data[0]);
+		av_samples_alloc(dst_data, &dst_linsize, m_pAudioCodecCtx->channels,
+			dst_nb_samples, m_pAudioCodecCtx->sample_fmt, 1);
+		max_dst_nb_samples = dst_nb_samples;
+	}
+
+	int ret = swr_convert(swr_ctx, dst_data, dst_nb_samples,
+		(const uint8_t**)audioSamples, src_nb_samples);
+	if (ret <= 0)
+	{
+		OutputDebugStringA("swr_convert failed. \n");
+		return;
+	}
+
+	int resampled_data_size = av_samples_get_buffer_size(&dst_linsize,
+		m_pAudioCodecCtx->channels, ret, m_pAudioCodecCtx->sample_fmt, 1);
+	if (resampled_data_size <= 0)
+	{
+		OutputDebugStringA("av_samples_get_buffer_size failed. \n");
 		return;
 	}
 
