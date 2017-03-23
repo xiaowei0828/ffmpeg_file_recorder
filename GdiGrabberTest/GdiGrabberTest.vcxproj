@@ -138,6 +138,20 @@
   <ItemGroup>
     <Image Include="res\GdiGrabberTest.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="webrtc\base\rtc_base_approved.vcxproj">
+      <Project>{510deddc-ed2f-0a3b-abe1-f7f1e6d75cf8}</Project>
+    </ProjectReference>
+    <ProjectReference Include="webrtc\common_audio\common_audio.vcxproj">
+      <Project>{39fe2bb0-c2e7-db9c-d514-19b221f3ca00}</Project>
+    </ProjectReference>
+    <ProjectReference Include="webrtc\modules\audio_device.vcxproj">
+      <Project>{e7e494c8-f0d0-4376-4006-c691bb4233ef}</Project>
+    </ProjectReference>
+    <ProjectReference Include="webrtc\system_wrappers\system_wrappers.vcxproj">
+      <Project>{16fe3fd5-aa01-bd2a-2bff-7785ffededec}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -7,10 +7,12 @@
 #include "VideoStatic.h"
 #include "ScreenGdiGrabber.h"
 #include "MediaFileRecorder.h"
+#include "webrtc/modules/audio_device/include/audio_device.h"
 #include <memory>
 
 // CGdiGrabberTestDlg 对话框
-class CGdiGrabberTestDlg : public CDialogEx, IGdiGrabberDataCb
+class CGdiGrabberTestDlg : public CDialogEx, IGdiGrabberDataCb,
+	public webrtc::AudioTransport, public webrtc::AudioDeviceObserver
 {
 // 构造
 public:
@@ -24,6 +26,43 @@ public:
 
 	void OnScreenData(void* data, int width, int height) override;
 
+public:
+	/*webrtc::AudioTransport*/
+	int32_t RecordedDataIsAvailable(const void* audioSamples,
+		const size_t nSamples,
+		const size_t nBytesPerSample,
+		const uint8_t nChannels,
+		const uint32_t samplesPerSec,
+		const uint32_t totalDelayMS,
+		const int32_t clockDrift,
+		const uint32_t currentMicLevel,
+		const bool keyPressed,
+		uint32_t& newMicLevel) override;
+
+	int32_t NeedMorePlayData(const size_t nSamples,
+		const size_t nBytesPerSample,
+		const uint8_t nChannels,
+		const uint32_t samplesPerSec,
+		void* audioSamples,
+		size_t& nSamplesOut,
+		int64_t* elapsed_time_ms,
+		int64_t* ntp_time_ms) override 
+	{
+		return 0;
+	};
+
+	/*added by wrb, for capturing playout data*/
+	int32_t RecordedPlayDataIsAvailable(const void* audioSamples,
+		const size_t nSamples,
+		const size_t nBytesPerSample,
+		const uint8_t nChannels,
+		const uint32_t samplesPerSec,
+		const uint32_t totalDelayMS,
+		const int32_t clockDrift) override;
+
+	/*webrtc::AudioDeviceObserver*/
+	void OnErrorIsReported(const ErrorCode error) override;
+	void OnWarningIsReported(const WarningCode warning) override;
 
 // 实现
 protected:
@@ -42,8 +81,12 @@ private:
 	CVideoStatic m_StaticPic;
 	std::shared_ptr<CScreenGdiGrabber> gdi_grabber_;
 	std::shared_ptr<CMediaFileRecorder> media_file_recorder_;
+
+	webrtc::AudioDeviceModule* audio_dev_module_;
 	bool record_started_;
 	bool record_interrupt_;
 	CButton m_ButtonStart;
 	int64_t start_capture_time_;
+
+	int64_t duration_;
 };

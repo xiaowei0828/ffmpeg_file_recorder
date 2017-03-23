@@ -114,10 +114,13 @@ BOOL CGdiGrabberTestDlg::OnInitDialog()
 
 	
 	gdi_grabber_.reset(new CScreenGdiGrabber());
-	
 
 	media_file_recorder_.reset(new CMediaFileRecorder());
 	
+	audio_dev_module_ = webrtc::CreateAudioDeviceModule(0, webrtc::AudioDeviceModule::AudioLayer::kPlatformDefaultAudio);
+	audio_dev_module_->AddRef();
+	audio_dev_module_->RegisterAudioCallback(this);
+	audio_dev_module_->RegisterEventObserver(this);
 
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -196,29 +199,34 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 		record_info.video_info.src_pix_fmt = AV_PIX_FMT_RGB24;
 		media_file_recorder_->Init(record_info);
 
-		if (gdi_grabber_->StartGrab())
-		{
-			record_started_ = true;
-			m_ButtonStart.SetWindowTextW(L"停止");
-			media_file_recorder_->Start();
-			start_capture_time_ = timeGetTime();
-		}
+		gdi_grabber_->StartGrab();
+
+		audio_dev_module_->InitRecording();
+		audio_dev_module_->StartRecording();
+
+		record_started_ = true;
+		m_ButtonStart.SetWindowTextW(L"停止");
+		media_file_recorder_->Start();
+		start_capture_time_ = timeGetTime();
+		duration_ = 0;
 	}
 	else
 	{
 		record_started_ = false;
 		gdi_grabber_->StopGrab();
+		audio_dev_module_->StopRecording();
 		media_file_recorder_->Stop();
+		media_file_recorder_->UnInit();
 		m_ButtonStart.SetWindowTextW(L"开始");
 
 		gdi_grabber_->UnRegisterDataCb(this);
 		gdi_grabber_->UnRegisterDataCb(&m_StaticPic);
 
-		media_file_recorder_->UnInit();
-
-		int64_t duration = timeGetTime() - start_capture_time_;
+		if (!record_interrupt_)
+			duration_ += timeGetTime() - start_capture_time_;
+		
 		char log[128] = { 0 };
-		_snprintf(log, 128, "duration: %lld \n", duration);
+		_snprintf(log, 128, "duration: %lld \n", duration_);
 		OutputDebugStringA(log);
 	}
 		
@@ -229,6 +237,7 @@ void CGdiGrabberTestDlg::OnClose()
 {
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
 
+	audio_dev_module_->Release();
 	CDialogEx::OnClose();
 }
 
@@ -248,16 +257,53 @@ void CGdiGrabberTestDlg::OnBnClickedButtonInterrupt()
 	{
 		if (!record_interrupt_)
 		{
+			gdi_grabber_->StopGrab();
+			audio_dev_module_->StopRecording();
 			media_file_recorder_->Stop();
 			record_interrupt_ = true;
 			GetDlgItem(IDC_BUTTON_INTERRUPT)->SetWindowTextW(L"继续");
+
+			duration_ += timeGetTime() - start_capture_time_;
+			char log[128] = { 0 };
+			_snprintf(log, 128, "duration: %lld \n", duration_);
+			OutputDebugStringA(log);
 		}
 		else
 		{
+			gdi_grabber_->StartGrab();
+			audio_dev_module_->InitRecording();
+			audio_dev_module_->StartRecording();
 			media_file_recorder_->Start();
+			start_capture_time_ = timeGetTime();
 			record_interrupt_ = false;
 			GetDlgItem(IDC_BUTTON_INTERRUPT)->SetWindowTextW(L"暂停");
 		}
 	}
-	
+}
+
+int32_t CGdiGrabberTestDlg::RecordedDataIsAvailable(const void* audioSamples, const size_t nSamples, 
+	const size_t nBytesPerSample, const uint8_t nChannels, 
+	const uint32_t samplesPerSec, const uint32_t totalDelayMS, 
+	const int32_t clockDrift, const uint32_t currentMicLevel, 
+	const bool keyPressed, uint32_t& newMicLevel)
+{
+
+}
+
+int32_t CGdiGrabberTestDlg::RecordedPlayDataIsAvailable(const void* audioSamples, const size_t nSamples, 
+	const size_t nBytesPerSample, const uint8_t nChannels, 
+	const uint32_t samplesPerSec, const uint32_t totalDelayMS, 
+	const int32_t clockDrift)
+{
+
+}
+
+void CGdiGrabberTestDlg::OnErrorIsReported(const ErrorCode error)
+{
+
+}
+
+void CGdiGrabberTestDlg::OnWarningIsReported(const WarningCode warning)
+{
+
 }

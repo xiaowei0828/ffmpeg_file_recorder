@@ -24,7 +24,9 @@ CMediaFileRecorder::CMediaFileRecorder()
 	m_nCurrAudioPts(0),
 	m_nVideoFrameIndex(0),
 	m_nAudioFrameIndex(0),
-	m_pConvertCtx(NULL)
+	m_pConvertCtx(NULL),
+	m_nStartTime(0),
+	m_nDuration(0)
 {
 	m_bRun = false;
 }
@@ -119,7 +121,7 @@ bool CMediaFileRecorder::InitVideoRecord()
 	//m_pVideoCodecCtx->flags &= CODEC_FLAG_QSCALE;
 	// Set option
 	AVDictionary *param = 0;
-	av_dict_set(&param, "preset", "slow", 0);
+	av_dict_set(&param, "preset", "fast", 0);
 	av_dict_set(&param, "tune", "zerolatency", 0);
 
 	AVCodec* pEncoder = avcodec_find_encoder(m_pVideoCodecCtx->codec_id);
@@ -155,8 +157,7 @@ bool CMediaFileRecorder::InitVideoRecord()
 	av_new_packet(&m_VideoPacket, m_nPicSize);
 
 	//申请30帧缓存
-	m_pVideoFifoBuffer = av_fifo_alloc(100 * avpicture_get_size(m_pVideoCodecCtx->pix_fmt,
-		m_pVideoCodecCtx->width, m_pVideoCodecCtx->height));
+	m_pVideoFifoBuffer = av_fifo_alloc(100 * m_nPicSize);
 
 	InitializeCriticalSection(&m_VideoSection);
 
@@ -200,11 +201,68 @@ void CMediaFileRecorder::UnInitVideoRecord()
 
 bool CMediaFileRecorder::InitAudioRecord()
 {
+	m_pAudioStream = avformat_new_stream(m_pFormatCtx, NULL);
+	if (!m_pAudioStream)
+	{
+		OutputDebugStringA("create audio stream failed! \n");
+		return false;
+	}
+
+	m_pAudioCodecCtx = m_pAudioStream->codec;
+	m_pAudioCodecCtx->codec_id = AV_CODEC_ID_AAC;
+	m_pAudioCodecCtx->codec_type = AVMEDIA_TYPE_AUDIO;
+	m_pAudioCodecCtx->sample_fmt = AV_SAMPLE_FMT_S16;
+	m_pAudioCodecCtx->sample_rate = 44100;
+	m_pAudioCodecCtx->channel_layout = AV_CH_LAYOUT_STEREO;
+	m_pAudioCodecCtx->channels = av_get_channel_layout_nb_channels(m_pAudioCodecCtx->channel_layout);
+	m_pAudioCodecCtx->bit_rate = 64000;
+
+	AVCodec* audio_encoder = avcodec_find_encoder(m_pAudioCodecCtx->codec_id);
+	if (!audio_encoder)
+	{
+		OutputDebugStringA("failed to find audio encoder! \n");
+		return false;
+	}
+
+	if (avcodec_open2(m_pAudioCodecCtx, audio_encoder, NULL) < 0)
+	{
+		OutputDebugStringA("failed to open audio codec context");
+		return false;
+	}
+
+	m_pAudioFrame = av_frame_alloc();
+	m_pAudioFrame->nb_samples = m_pAudioCodecCtx->frame_size;
+	m_pAudioFrame->format = m_pAudioCodecCtx->sample_fmt;
+
+	m_nAudioSize = av_samples_get_buffer_size(NULL, m_pAudioCodecCtx->channels,
+		m_pAudioCodecCtx->frame_size, m_pAudioCodecCtx->sample_fmt, 1);
+	m_pAudioBuffer = (uint8_t *)av_malloc(m_nAudioSize);
+	avcodec_fill_audio_frame(m_pAudioFrame, m_pAudioCodecCtx->channels,
+		m_pAudioCodecCtx->sample_fmt, (const uint8_t*)m_pAudioBuffer, m_nAudioSize, 1);
+
+	av_new_packet(&m_AudioPacket, m_nAudioSize);
+
+	//申请100帧缓存
+	m_pAudioFifoBuffer = av_audio_fifo_alloc(m_pAudioCodecCtx->sample_fmt,
+		m_pAudioCodecCtx->channels, 100 * m_pAudioFrame->nb_samples);
+
+	InitializeCriticalSection(&m_AudioSection);
+
 	return true;
 }
 
 void CMediaFileRecorder::UnInitAudioRecord()
 {
+	av_free_packet(&m_AudioPacket);
+	avcodec_close(m_pAudioCodecCtx);
+	m_pAudioCodecCtx = NULL;
+	av_free(m_pAudioFrame);
+	m_pAudioFrame = NULL;
+	av_free(m_pAudioBuffer);
+	m_pAudioBuffer = NULL;
+	av_audio_fifo_free(m_pAudioFifoBuffer);
+	m_pAudioFifoBuffer = NULL;
+	m_nAudioSize = 0;
 	return;
 }
 
@@ -224,6 +282,9 @@ void CMediaFileRecorder::UnInit()
 		avformat_free_context(m_pFormatCtx);
 		m_pFormatCtx = NULL;
 		m_bInited = false;
+
+		m_nStartTime = 0;
+		m_nDuration = 0;
 	}
 	
 }
@@ -235,6 +296,7 @@ bool CMediaFileRecorder::Start()
 		OutputDebugStringA("Not inited\n");
 		return false;
 	}
+	m_nStartTime = timeGetTime();
 	StartWriteFileThread();
 	return true;
 }
@@ -244,6 +306,7 @@ void CMediaFileRecorder::Stop()
 	if (m_bRun)
 	{
 		StopWriteFileThread();
+		m_nDuration += timeGetTime() - m_nStartTime;
 	}
 }
 
@@ -252,8 +315,12 @@ void CMediaFileRecorder::FillVideo(void* data)
 	if (m_bInited && m_bRun)
 	{
 		int64_t begin_time = timeGetTime();
-		if (av_fifo_space(m_pVideoFifoBuffer) >= m_nPicSize)
+		if (av_fifo_space(m_pVideoFifoBuffer) >= m_nPicSize + sizeof(int64_t))
 		{
+			int64_t nVideoCaptureTime;
+
+			nVideoCaptureTime = m_nDuration + (timeGetTime() - m_nStartTime);
+			
 			uint8_t* src_rgb[3] = { (uint8_t*)data, NULL, NULL};
 			int src_rgb_stride[3] = { 3 * m_stRecordInfo.video_info.src_width,0, 0};
 			sws_scale(m_pConvertCtx, src_rgb, src_rgb_stride, 0, 3 * m_stRecordInfo.video_info.src_height,
@@ -261,6 +328,7 @@ void CMediaFileRecorder::FillVideo(void* data)
 
 			int size = m_stRecordInfo.video_info.dst_width * m_stRecordInfo.video_info.dst_height;
 			EnterCriticalSection(&m_VideoSection);
+			av_fifo_generic_write(m_pVideoFifoBuffer, &nVideoCaptureTime, sizeof(int64_t), NULL);
 			av_fifo_generic_write(m_pVideoFifoBuffer, m_pInVideoFrame->data[0], size, NULL);
 			av_fifo_generic_write(m_pVideoFifoBuffer, m_pInVideoFrame->data[1], size / 4, NULL);
 			av_fifo_generic_write(m_pVideoFifoBuffer, m_pInVideoFrame->data[2], size / 4, NULL);
@@ -279,8 +347,64 @@ void CMediaFileRecorder::FillVideo(void* data)
 	
 }
 
-void CMediaFileRecorder::FillAudio()
+
+void CMediaFileRecorder::FillAudio(const void* audioSamples, 
+	const size_t nSamples, const size_t nBytesPerSample, 
+	const uint8_t nChannels, const uint32_t samplesPerSec)
 {
+	int src_rate = samplesPerSec;
+	int src_nb_channels = nChannels;
+	int src_nb_samples = nSamples;
+	int64_t src_ch_layout;
+	if (nChannels == 1)
+		src_ch_layout = AV_CH_LAYOUT_MONO;
+	else if (nChannels == 2)
+		src_ch_layout = AV_CH_LAYOUT_STEREO;
+	else
+	{
+		OutputDebugStringA("Invalid nChannels in FillAudio");
+		return;
+	}
+
+	AVSampleFormat src_sample_fmt;
+	if (nBytesPerSample == 2)
+		src_sample_fmt = AV_SAMPLE_FMT_S16;
+	else if (nBytesPerSample == 4)
+		src_sample_fmt = AV_SAMPLE_FMT_S32;
+	else
+	{
+		OutputDebugStringA("Invalid nBytesPerSample in FillAudio");
+		return;
+	}
+
+	SwrContext* swr_ctx = swr_alloc();
+	if (!swr_ctx)
+	{
+		OutputDebugStringA("swr_alloc failed in FillAudio");
+		return;
+	}
+
+	/* set options */
+	//设置源通道布局  
+	av_opt_set_int(swr_ctx, "in_channel_layout", src_ch_layout, 0);
+	//设置源通道采样率  
+	av_opt_set_int(swr_ctx, "in_sample_rate", src_rate, 0);
+	//设置源通道样本格式  
+	av_opt_set_sample_fmt(swr_ctx, "in_sample_fmt", src_sample_fmt, 0);
+
+	//目标通道布局  
+	av_opt_set_int(swr_ctx, "out_channel_layout", m_pAudioCodecCtx->channel_layout, 0);
+	//目标采用率  
+	av_opt_set_int(swr_ctx, "out_sample_rate", m_pAudioCodecCtx->sample_rate, 0);
+	//目标样本格式  
+	av_opt_set_sample_fmt(swr_ctx, "out_sample_fmt", m_pAudioCodecCtx->sample_fmt, 0);
+
+	if (swr_init(swr_ctx) < 0)
+	{
+		OutputDebugStringA("swr_init failed in FillAudio");
+		return;
+	}
+
 
 }
 
@@ -304,22 +428,23 @@ void CMediaFileRecorder::WriteFileThreadProc()
 {
 	while (m_bRun)
 	{
-		if (av_fifo_size(m_pVideoFifoBuffer) >= m_nPicSize)
+		if (av_fifo_size(m_pVideoFifoBuffer) >= m_nPicSize + sizeof(int64_t))
 		{
+			int64_t nCaptureTime;
 			EnterCriticalSection(&m_VideoSection);
+			av_fifo_generic_read(m_pVideoFifoBuffer, &nCaptureTime, sizeof(int64_t), NULL);
 			av_fifo_generic_read(m_pVideoFifoBuffer, m_pOutPicBuffer, m_nPicSize, NULL);
 			LeaveCriticalSection(&m_VideoSection);
-			/*avpicture_fill((AVPicture*)m_pOutVideoFrame, m_pOutPicBuffer,
-				m_pVideoCodecCtx->pix_fmt,
-				m_pVideoCodecCtx->width,
-				m_pVideoCodecCtx->height);*/
 				
-			m_pOutVideoFrame->pts = m_nVideoFrameIndex *
-				 ((m_pFormatCtx->streams[0]->time_base.den / m_pFormatCtx->streams[0]->time_base.num) / m_stRecordInfo.video_info.frame_rate);
+			m_pOutVideoFrame->pts = nCaptureTime *
+				 ((m_pFormatCtx->streams[0]->time_base.den / m_pFormatCtx->streams[0]->time_base.num)) / 1000;
 			
 			int bGotPicture = 0;
 
+			int64_t encode_start_time = timeGetTime();
 			int ret = avcodec_encode_video2(m_pVideoCodecCtx, &m_VideoPacket, m_pOutVideoFrame, &bGotPicture);
+			int64_t encode_duration = timeGetTime() - encode_start_time;
+
 			if (ret < 0)
 			{
 				continue;
@@ -329,8 +454,13 @@ void CMediaFileRecorder::WriteFileThreadProc()
 			{
 				m_VideoPacket.stream_index = 0;
 				m_nCurrVideoPts = m_VideoPacket.pts;
-
+				int64_t write_frame_time = timeGetTime();
 				ret = av_interleaved_write_frame(m_pFormatCtx, &m_VideoPacket);
+				int64_t write_frame_duration = timeGetTime() - write_frame_time;
+
+				char log[128] = { 0 };
+				_snprintf(log, 128, "encode frame: %lld, write frame: %lld \n", encode_duration, write_frame_duration);
+				OutputDebugStringA(log);
 			}
 			m_nVideoFrameIndex++;
 		}

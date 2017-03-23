@@ -10,6 +10,7 @@ extern "C"
 #include "libswscale/swscale.h"
 #include "libavdevice/avdevice.h"
 #include "libavutil/audio_fifo.h"
+#include "libswresample/swresample.h"
 
 #pragma comment(lib, "avcodec.lib")
 #pragma comment(lib, "avformat.lib")
@@ -72,7 +73,9 @@ public:
 	bool Start();
 	void Stop();
 	void FillVideo(void* data);
-	void FillAudio();
+	void FillAudio(const void* audioSamples, const size_t nSamples,
+		const size_t nBytesPerSample, const uint8_t nChannels,
+		const uint32_t samplesPerSec);
 
 private:
 	bool InitVideoRecord();
@@ -107,10 +110,10 @@ private:
 	int m_nAudioSize;
 
 	AVFifoBuffer* m_pVideoFifoBuffer;
-	AVFifoBuffer* m_pAudioFifoBuffer;
+	AVAudioFifo* m_pAudioFifoBuffer;
 
 	CRITICAL_SECTION m_VideoSection;
-	CRITICAL_SECTION m_AudiSection;
+	CRITICAL_SECTION m_AudioSection;
 
 	int64_t m_nCurrVideoPts;
 	int64_t m_nCurrAudioPts;
@@ -119,10 +122,11 @@ private:
 
 	std::thread m_WriteFileThread;
 
-
 	int64_t m_nWriteFrame;
 	int64_t m_nDiscardFrame;
-	
+
+	int64_t m_nStartTime;
+	int64_t m_nDuration;
 };
 
 

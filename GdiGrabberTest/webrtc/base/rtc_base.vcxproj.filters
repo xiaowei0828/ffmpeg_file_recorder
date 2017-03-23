@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="..">
+      <UniqueIdentifier>{739DB09A-CC57-A953-A6CF-F64FA08E4FA7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="..\overrides">
+      <UniqueIdentifier>{84AD2EB6-5184-86E2-7EC9-59E84A4DB552}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="..\overrides\webrtc">
+      <UniqueIdentifier>{543055F1-DB92-5041-CF1C-6916DDF7679F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="..\overrides\webrtc\base">
+      <UniqueIdentifier>{DBBAC0A6-BB0A-CA51-45CC-DA4574B671E6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="..\overrides\webrtc\base\_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="..">
+      <UniqueIdentifier>{739DB09A-CC57-A953-A6CF-F64FA08E4FA7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="..\overrides">
+      <UniqueIdentifier>{84AD2EB6-5184-86E2-7EC9-59E84A4DB552}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="..\overrides\webrtc">
+      <UniqueIdentifier>{543055F1-DB92-5041-CF1C-6916DDF7679F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="..\overrides\webrtc\base">
+      <UniqueIdentifier>{DBBAC0A6-BB0A-CA51-45CC-DA4574B671E6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="..\overrides\webrtc\base\_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="..">
+      <UniqueIdentifier>{739DB09A-CC57-A953-A6CF-F64FA08E4FA7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="..\overrides">
+      <UniqueIdentifier>{84AD2EB6-5184-86E2-7EC9-59E84A4DB552}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="..\overrides\webrtc">
+      <UniqueIdentifier>{543055F1-DB92-5041-CF1C-6916DDF7679F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="..\overrides\webrtc\base">
+      <UniqueIdentifier>{DBBAC0A6-BB0A-CA51-45CC-DA4574B671E6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="..\overrides\webrtc\base\_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="arraysize.h"/>
+    <ClCompile Include="asyncfile.cc"/>
+    <ClInclude Include="asyncfile.h"/>
+    <ClCompile Include="asyncinvoker.cc"/>
+    <ClInclude Include="asyncinvoker.h"/>
+    <ClInclude Include="asyncinvoker-inl.h"/>
+    <ClCompile Include="asyncpacketsocket.cc"/>
+    <ClInclude Include="asyncpacketsocket.h"/>
+    <ClCompile Include="asyncresolverinterface.cc"/>
+    <ClInclude Include="asyncresolverinterface.h"/>
+    <ClCompile Include="asyncsocket.cc"/>
+    <ClInclude Include="asyncsocket.h"/>
+    <ClCompile Include="asynctcpsocket.cc"/>
+    <ClInclude Include="asynctcpsocket.h"/>
+    <ClCompile Include="asyncudpsocket.cc"/>
+    <ClInclude Include="asyncudpsocket.h"/>
+    <ClCompile Include="autodetectproxy.cc"/>
+    <ClInclude Include="autodetectproxy.h"/>
+    <ClCompile Include="bandwidthsmoother.cc"/>
+    <ClInclude Include="bandwidthsmoother.h"/>
+    <ClCompile Include="base64.cc"/>
+    <ClInclude Include="base64.h"/>
+    <ClInclude Include="basicdefs.h"/>
+    <ClInclude Include="bind.h"/>
+    <ClInclude Include="callback.h"/>
+    <ClCompile Include="common.cc"/>
+    <ClInclude Include="common.h"/>
+    <ClCompile Include="crc32.cc"/>
+    <ClInclude Include="crc32.h"/>
+    <ClCompile Include="cryptstring.cc"/>
+    <ClInclude Include="cryptstring.h"/>
+    <ClCompile Include="diskcache.cc"/>
+    <ClInclude Include="diskcache.h"/>
+    <ClCompile Include="diskcache_win32.cc"/>
+    <ClInclude Include="diskcache_win32.h"/>
+    <ClCompile Include="filerotatingstream.cc"/>
+    <ClInclude Include="filerotatingstream.h"/>
+    <ClCompile Include="fileutils.cc"/>
+    <ClInclude Include="fileutils.h"/>
+    <ClInclude Include="fileutils_mock.h"/>
+    <ClCompile Include="firewallsocketserver.cc"/>
+    <ClInclude Include="firewallsocketserver.h"/>
+    <ClCompile Include="flags.cc"/>
+    <ClInclude Include="flags.h"/>
+    <ClInclude Include="format_macros.h"/>
+    <ClInclude Include="gunit_prod.h"/>
+    <ClCompile Include="helpers.cc"/>
+    <ClInclude Include="helpers.h"/>
+    <ClCompile Include="httpbase.cc"/>
+    <ClInclude Include="httpbase.h"/>
+    <ClCompile Include="httpclient.cc"/>
+    <ClInclude Include="httpclient.h"/>
+    <ClInclude Include="httpcommon-inl.h"/>
+    <ClCompile Include="httpcommon.cc"/>
+    <ClInclude Include="httpcommon.h"/>
+    <ClCompile Include="httprequest.cc"/>
+    <ClInclude Include="httprequest.h"/>
+    <ClCompile Include="httpserver.cc"/>
+    <ClInclude Include="httpserver.h"/>
+    <ClCompile Include="ipaddress.cc"/>
+    <ClInclude Include="ipaddress.h"/>
+    <ClCompile Include="json.cc"/>
+    <ClInclude Include="json.h"/>
+    <ClInclude Include="linuxfdwalk.h"/>
+    <ClInclude Include="linked_ptr.h"/>
+    <ClCompile Include="logsinks.cc"/>
+    <ClInclude Include="logsinks.h"/>
+    <ClInclude Include="maccocoathreadhelper.h"/>
+    <ClInclude Include="mathutils.h"/>
+    <ClCompile Include="messagedigest.cc"/>
+    <ClInclude Include="messagedigest.h"/>
+    <ClCompile Include="messagehandler.cc"/>
+    <ClInclude Include="messagehandler.h"/>
+    <ClCompile Include="messagequeue.cc"/>
+    <ClInclude Include="messagequeue.h"/>
+    <ClCompile Include="multipart.cc"/>
+    <ClInclude Include="multipart.h"/>
+    <ClCompile Include="natserver.cc"/>
+    <ClInclude Include="natserver.h"/>
+    <ClCompile Include="natsocketfactory.cc"/>
+    <ClInclude Include="natsocketfactory.h"/>
+    <ClCompile Include="nattypes.cc"/>
+    <ClInclude Include="nattypes.h"/>
+    <ClCompile Include="nethelpers.cc"/>
+    <ClInclude Include="nethelpers.h"/>
+    <ClCompile Include="network.cc"/>
+    <ClInclude Include="network.h"/>
+    <ClInclude Include="nullsocketserver.h"/>
+    <ClCompile Include="optionsfile.cc"/>
+    <ClInclude Include="optionsfile.h"/>
+    <ClCompile Include="pathutils.cc"/>
+    <ClInclude Include="pathutils.h"/>
+    <ClCompile Include="physicalsocketserver.cc"/>
+    <ClInclude Include="physicalsocketserver.h"/>
+    <ClCompile Include="profiler.cc"/>
+    <ClInclude Include="profiler.h"/>
+    <ClCompile Include="proxydetect.cc"/>
+    <ClInclude Include="proxydetect.h"/>
+    <ClCompile Include="proxyinfo.cc"/>
+    <ClInclude Include="proxyinfo.h"/>
+    <ClCompile Include="proxyserver.cc"/>
+    <ClInclude Include="proxyserver.h"/>
+    <ClCompile Include="ratelimiter.cc"/>
+    <ClInclude Include="ratelimiter.h"/>
+    <ClInclude Include="refcount.h"/>
+    <ClInclude Include="referencecountedsingletonfactory.h"/>
+    <ClInclude Include="rollingaccumulator.h"/>
+    <ClCompile Include="rtccertificate.cc"/>
+    <ClInclude Include="rtccertificate.h"/>
+    <ClCompile Include="schanneladapter.cc"/>
+    <ClInclude Include="schanneladapter.h"/>
+    <ClInclude Include="scoped_autorelease_pool.h"/>
+    <ClInclude Include="scoped_ref_ptr.h"/>
+    <ClInclude Include="scopedptrcollection.h"/>
+    <ClInclude Include="sec_buffer.h"/>
+    <ClCompile Include="sha1.cc"/>
+    <ClInclude Include="sha1.h"/>
+    <ClCompile Include="sha1digest.cc"/>
+    <ClInclude Include="sha1digest.h"/>
+    <ClCompile Include="sharedexclusivelock.cc"/>
+    <ClInclude Include="sharedexclusivelock.h"/>
+    <ClCompile Include="signalthread.cc"/>
+    <ClInclude Include="signalthread.h"/>
+    <ClCompile Include="sigslot.cc"/>
+    <ClInclude Include="sigslot.h"/>
+    <ClInclude Include="sigslotrepeater.h"/>
+    <ClInclude Include="socket.h"/>
+    <ClCompile Include="socketadapters.cc"/>
+    <ClInclude Include="socketadapters.h"/>
+    <ClCompile Include="socketaddress.cc"/>
+    <ClInclude Include="socketaddress.h"/>
+    <ClCompile Include="socketaddresspair.cc"/>
+    <ClInclude Include="socketaddresspair.h"/>
+    <ClInclude Include="socketfactory.h"/>
+    <ClCompile Include="socketpool.cc"/>
+    <ClInclude Include="socketpool.h"/>
+    <ClInclude Include="socketserver.h"/>
+    <ClCompile Include="socketstream.cc"/>
+    <ClInclude Include="socketstream.h"/>
+    <ClCompile Include="ssladapter.cc"/>
+    <ClInclude Include="ssladapter.h"/>
+    <ClInclude Include="sslconfig.h"/>
+    <ClCompile Include="sslfingerprint.cc"/>
+    <ClInclude Include="sslfingerprint.h"/>
+    <ClCompile Include="sslidentity.cc"/>
+    <ClInclude Include="sslidentity.h"/>
+    <ClInclude Include="sslroots.h"/>
+    <ClCompile Include="sslsocketfactory.cc"/>
+    <ClInclude Include="sslsocketfactory.h"/>
+    <ClCompile Include="sslstreamadapter.cc"/>
+    <ClInclude Include="sslstreamadapter.h"/>
+    <ClCompile Include="sslstreamadapterhelper.cc"/>
+    <ClInclude Include="sslstreamadapterhelper.h"/>
+    <ClCompile Include="stream.cc"/>
+    <ClInclude Include="stream.h"/>
+    <ClCompile Include="task.cc"/>
+    <ClInclude Include="task.h"/>
+    <ClCompile Include="taskparent.cc"/>
+    <ClInclude Include="taskparent.h"/>
+    <ClCompile Include="taskrunner.cc"/>
+    <ClInclude Include="taskrunner.h"/>
+    <ClCompile Include="testclient.cc"/>
+    <ClInclude Include="testclient.h"/>
+    <ClCompile Include="thread.cc"/>
+    <ClInclude Include="thread.h"/>
+    <ClCompile Include="timing.cc"/>
+    <ClInclude Include="timing.h"/>
+    <ClCompile Include="transformadapter.cc"/>
+    <ClInclude Include="transformadapter.h"/>
+    <ClCompile Include="urlencode.cc"/>
+    <ClInclude Include="urlencode.h"/>
+    <ClCompile Include="versionparsing.cc"/>
+    <ClInclude Include="versionparsing.h"/>
+    <ClCompile Include="virtualsocketserver.cc"/>
+    <ClInclude Include="virtualsocketserver.h"/>
+    <ClCompile Include="win32.cc"/>
+    <ClInclude Include="win32.h"/>
+    <ClCompile Include="win32filesystem.cc"/>
+    <ClInclude Include="win32filesystem.h"/>
+    <ClCompile Include="win32regkey.cc"/>
+    <ClInclude Include="win32regkey.h"/>
+    <ClCompile Include="win32securityerrors.cc"/>
+    <ClCompile Include="win32socketinit.cc"/>
+    <ClInclude Include="win32socketinit.h"/>
+    <ClCompile Include="win32socketserver.cc"/>
+    <ClInclude Include="win32socketserver.h"/>
+    <ClCompile Include="win32window.cc"/>
+    <ClInclude Include="win32window.h"/>
+    <ClCompile Include="win32windowpicker.cc"/>
+    <ClInclude Include="win32windowpicker.h"/>
+    <ClInclude Include="window.h"/>
+    <ClInclude Include="windowpicker.h"/>
+    <ClInclude Include="windowpickerfactory.h"/>
+    <ClCompile Include="winfirewall.cc"/>
+    <ClInclude Include="winfirewall.h"/>
+    <ClCompile Include="winping.cc"/>
+    <ClInclude Include="winping.h"/>
+    <ClCompile Include="worker.cc"/>
+    <ClInclude Include="worker.h"/>
+    <ClInclude Include="openssl.h"/>
+    <ClCompile Include="openssladapter.cc"/>
+    <ClInclude Include="openssladapter.h"/>
+    <ClCompile Include="openssldigest.cc"/>
+    <ClInclude Include="openssldigest.h"/>
+    <ClCompile Include="opensslidentity.cc"/>
+    <ClInclude Include="opensslidentity.h"/>
+    <ClCompile Include="opensslstreamadapter.cc"/>
+    <ClInclude Include="opensslstreamadapter.h"/>
+    <None Include="base.gyp"/>
+    <ClCompile Include="..\overrides\webrtc\base\logging.cc">
+      <Filter>..\overrides\webrtc\base\_excluded_files</Filter>
+    </ClCompile>
+    <ClInclude Include="..\overrides\webrtc\base\logging.h">
+      <Filter>..\overrides\webrtc\base\_excluded_files</Filter>
+    </ClInclude>
+    <ClCompile Include="..\overrides\webrtc\base\win32socketinit.cc">
+      <Filter>..\overrides\webrtc\base\_excluded_files</Filter>
+    </ClCompile>
+    <ClCompile Include="dbus.cc">
+      <Filter>_excluded_files</Filter>
+    </ClCompile>
+    <ClInclude Include="dbus.h">
+      <Filter>_excluded_files</Filter>
+    </ClInclude>
+    <ClCompile Include="ifaddrs-android.cc">
+      <Filter>_excluded_files</Filter>
+    </ClCompile>
+    <ClInclude Include="ifaddrs-android.h">
+      <Filter>_excluded_files</Filter>
+    </ClInclude>
+    <None Include="iosfilesystem.mm">
+      <Filter>_excluded_files</Filter>
+    </None>
+    <ClCompile Include="latebindingsymboltable.cc">
+      <Filter>_excluded_files</Filter>
+    </ClCompile>
+    <ClInclude Include="latebindingsymboltable.h">
+      <Filter>_excluded_files</Filter>
+    </ClInclude>
+    <ClCompile Include="libdbusglibsymboltable.cc">
+      <Filter>_excluded_files</Filter>
+    </ClCompile>
+    <ClInclude Include="libdbusglibsymboltable.h">
+      <Filter>_excluded_files</Filter>
+    </ClInclude>
+    <ClCompile Include="linux.cc">
+      <Filter>_excluded_files</Filter>
+    </ClCompile>
+    <ClInclude Include="linux.h">
+      <Filter>_excluded_files</Filter>
+    </ClInclude>
+    <ClCompile Include="linuxfdwalk.c">
+      <Filter>_excluded_files</Filter>
+    </ClCompile>
+    <ClCompile Include="macasyncsocket.cc">
+      <Filter>_excluded_files</Filter>
+    </ClCompile>
+    <ClInclude Include="macasyncsocket.h">
+      <Filter>_excluded_files</Filter>
+    </ClInclude>
+    <ClInclude Include="maccocoasocketserver.h">
+      <Filter>_excluded_files</Filter>
+    </ClInclude>
+    <None Include="maccocoasocketserver.mm">
+      <Filter>_excluded_files</Filter>
+    </None>
+    <None Include="maccocoathreadhelper.mm">
+      <Filter>_excluded_files</Filter>
+    </None>
+    <ClCompile Include="macconversion.cc">
+      <Filter>_excluded_files</Filter>
+    </ClCompile>
+    <ClInclude Include="macconversion.h">
+      <Filter>_excluded_files</Filter>
+    </ClInclude>
+    <ClCompile Include="macsocketserver.cc">
+      <Filter>_excluded_files</Filter>
+    </ClCompile>
+    <ClInclude Include="macsocketserver.h">
+      <Filter>_excluded_files</Filter>
+    </ClInclude>
+    <ClCompile Include="macutils.cc">
+      <Filter>_excluded_files</Filter>
+    </ClCompile>
+    <ClInclude Include="macutils.h">
+      <Filter>_excluded_files</Filter>
+    </ClInclude>
+    <ClCompile Include="macwindowpicker.cc">
+      <Filter>_excluded_files</Filter>
+    </ClCompile>
+    <ClInclude Include="macwindowpicker.h">
+      <Filter>_excluded_files</Filter>
+    </ClInclude>
+    <ClCompile Include="posix.cc">
+      <Filter>_excluded_files</Filter>
+    </ClCompile>
+    <ClInclude Include="posix.h">
+      <Filter>_excluded_files</Filter>
+    </ClInclude>
+    <None Include="scoped_autorelease_pool.mm">
+      <Filter>_excluded_files</Filter>
+    </None>
+    <ClCompile Include="unixfilesystem.cc">
+      <Filter>_excluded_files</Filter>
+    </ClCompile>
+    <ClInclude Include="unixfilesystem.h">
+      <Filter>_excluded_files</Filter>
+    </ClInclude>
+    <ClCompile Include="x11windowpicker.cc">
+      <Filter>_excluded_files</Filter>
+    </ClCompile>
+    <ClInclude Include="x11windowpicker.h">
+      <Filter>_excluded_files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

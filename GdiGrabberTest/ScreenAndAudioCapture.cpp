@@ -139,8 +139,6 @@ int OpenAudioCapture()
 		printf("can not find or open audio decoder!\n");
 	}
 
-
-
 	return 0;
 }
 

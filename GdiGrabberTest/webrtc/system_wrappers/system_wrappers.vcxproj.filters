@@ -1,0 +1,593 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface">
+      <UniqueIdentifier>{D45E0FBD-84A7-45CA-36AC-7A06BD0C9BF7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="interface\_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{8A6F5E6E-316F-22D4-1547-253B04CB32E7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\_excluded_files">
+      <UniqueIdentifier>{158E591E-B6EA-0C85-8F5A-18EAFA09B4CE}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="interface\aligned_array.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\aligned_malloc.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\atomic32.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\clock.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\condition_variable_wrapper.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\cpu_info.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\cpu_features_wrapper.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\critical_section_wrapper.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\data_log.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\data_log_c.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\data_log_impl.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\event_tracer.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\event_wrapper.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\field_trial.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\file_wrapper.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\fix_interlocked_exchange_pointer_win.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\logging.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\metrics.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\ref_count.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\rtp_to_ntp.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\rw_lock_wrapper.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\scoped_vector.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\sleep.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\sort.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\static_instance.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\stl_util.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\stringize_macros.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\thread_wrapper.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\tick_util.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\timestamp_extrapolator.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\trace.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\trace_event.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="interface\utf_util_win.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClCompile Include="source\aligned_malloc.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\atomic32_win.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\clock.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\condition_variable.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\condition_variable_event_win.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClInclude Include="source\condition_variable_event_win.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClCompile Include="source\condition_variable_native_win.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClInclude Include="source\condition_variable_native_win.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClCompile Include="source\cpu_info.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\cpu_features.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\critical_section.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\critical_section_win.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClInclude Include="source\critical_section_win.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClCompile Include="source\data_log_c.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\data_log_no_op.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\event.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\event_timer_win.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClInclude Include="source\event_timer_win.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClCompile Include="source\event_tracer.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\file_impl.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClInclude Include="source\file_impl.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClCompile Include="source\logging.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\rtp_to_ntp.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\rw_lock.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\rw_lock_generic.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClInclude Include="source\rw_lock_generic.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClCompile Include="source\rw_lock_win.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClInclude Include="source\rw_lock_win.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClCompile Include="source\sleep.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\sort.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\tick_util.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\thread.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\thread_win.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClInclude Include="source\thread_win.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClCompile Include="source\timestamp_extrapolator.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="source\trace_impl.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClInclude Include="source\trace_impl.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClCompile Include="source\trace_win.cc">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClInclude Include="source\trace_win.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <None Include="system_wrappers.gyp"/>
+    <ClInclude Include="interface\logcat_trace_context.h">
+      <Filter>interface\_excluded_files</Filter>
+    </ClInclude>
+    <ClCompile Include="source\atomic32_mac.cc">
+      <Filter>source\_excluded_files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\atomic32_posix.cc">
+      <Filter>source\_excluded_files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\condition_variable_posix.cc">
+      <Filter>source\_excluded_files</Filter>
+    </ClCompile>
+    <ClInclude Include="source\condition_variable_posix.h">
+      <Filter>source\_excluded_files</Filter>
+    </ClInclude>
+    <ClCompile Include="source\critical_section_posix.cc">
+      <Filter>source\_excluded_files</Filter>
+    </ClCompile>
+    <ClInclude Include="source\critical_section_posix.h">
+      <Filter>source\_excluded_files</Filter>
+    </ClInclude>
+    <ClCompile Include="source\data_log.cc">
+      <Filter>source\_excluded_files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\event_timer_posix.cc">
+      <Filter>source\_excluded_files</Filter>
+    </ClCompile>
+    <ClInclude Include="source\event_timer_posix.h">
+      <Filter>source\_excluded_files</Filter>
+    </ClInclude>
+    <ClCompile Include="source\logcat_trace_context.cc">
+      <Filter>source\_excluded_files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\rw_lock_posix.cc">
+      <Filter>source\_excluded_files</Filter>
+    </ClCompile>
+    <ClInclude Include="source\rw_lock_posix.h">
+      <Filter>source\_excluded_files</Filter>
+    </ClInclude>
+    <ClCompile Include="source\thread_posix.cc">
+      <Filter>source\_excluded_files</Filter>
+    </ClCompile>
+    <ClInclude Include="source\thread_posix.h">
+      <Filter>source\_excluded_files</Filter>
+    </ClInclude>
+    <ClCompile Include="source\trace_posix.cc">
+      <Filter>source\_excluded_files</Filter>
+    </ClCompile>
+    <ClInclude Include="source\trace_posix.h">
+      <Filter>source\_excluded_files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
