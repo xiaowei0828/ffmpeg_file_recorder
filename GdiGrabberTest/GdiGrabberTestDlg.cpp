@@ -6,6 +6,7 @@
 #include "GdiGrabberTest.h"
 #include "GdiGrabberTestDlg.h"
 #include "afxdialogex.h"
+#include <timeapi.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -51,7 +52,8 @@ CGdiGrabberTestDlg::CGdiGrabberTestDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CGdiGrabberTestDlg::IDD, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
-	capture_started_ = false;
+	record_started_ = false;
+	record_interrupt_ = false;
 }
 
 void CGdiGrabberTestDlg::DoDataExchange(CDataExchange* pDX)
@@ -67,9 +69,15 @@ BEGIN_MESSAGE_MAP(CGdiGrabberTestDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_BUTTON_START, &CGdiGrabberTestDlg::OnBnClickedButtonStart)
 	ON_WM_CLOSE()
-	ON_BN_CLICKED(IDC_BUTTON_FINISH, &CGdiGrabberTestDlg::OnBnClickedButtonFinish)
+	ON_BN_CLICKED(IDC_BUTTON_INTERRUPT, &CGdiGrabberTestDlg::OnBnClickedButtonInterrupt)
 END_MESSAGE_MAP()
 
+
+#define CAPTURE_LEFT 0
+#define CAPTURE_TOP 0
+#define CAPTURE_WIDTH 1920
+#define CAPTURE_HEIGHT 1080
+#define CAPTURE_FRAME_RATE 15
 
 // CGdiGrabberTestDlg 消息处理程序
 
@@ -104,28 +112,12 @@ BOOL CGdiGrabberTestDlg::OnInitDialog()
 
 	// TODO:  在此添加额外的初始化代码
 
-	RECT grab_rect = {0, 0, 600, 400};
+	
 	gdi_grabber_.reset(new CScreenGdiGrabber());
-	gdi_grabber_->RegisterDataCb(&m_StaticPic);
-	gdi_grabber_->SetGrabFrameRate(20);
-	gdi_grabber_->SetGrabRect(grab_rect);
-
-	gdi_grabber_->RegisterDataCb(this);
+	
 
 	media_file_recorder_.reset(new CMediaFileRecorder());
-	if (media_file_recorder_)
-	{
-		CMediaFileRecorder::RecordInfo record_info;
-		strcpy(record_info.file_name, "test.mp4");
-		record_info.video_info.src_width = 600;
-		record_info.video_info.src_height = 400;
-		record_info.video_info.dst_width = 600;
-		record_info.video_info.dst_height = 400;
-		record_info.video_info.frame_rate = 20;
-		record_info.video_info.bit_rate = 400000;
-		record_info.video_info.src_pix_fmt = AV_PIX_FMT_RGB24;
-		media_file_recorder_->Init(record_info);
-	}
+	
 
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -185,27 +177,51 @@ HCURSOR CGdiGrabberTestDlg::OnQueryDragIcon()
 void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 {
 	// TODO:  在此添加控件通知处理程序代码
-	if (gdi_grabber_)
+
+	if (!record_started_)
 	{
-		if (!capture_started_)
+		RECT grab_rect = { CAPTURE_LEFT, CAPTURE_TOP, CAPTURE_WIDTH, CAPTURE_HEIGHT };
+		gdi_grabber_->SetGrabFrameRate(CAPTURE_FRAME_RATE);
+		gdi_grabber_->SetGrabRect(grab_rect);
+		gdi_grabber_->RegisterDataCb(this);
+		gdi_grabber_->RegisterDataCb(&m_StaticPic);
+
+		CMediaFileRecorder::RecordInfo record_info;
+		strcpy(record_info.file_name, "test.mp4");
+		record_info.video_info.src_width = CAPTURE_WIDTH;
+		record_info.video_info.src_height = CAPTURE_HEIGHT;
+		record_info.video_info.dst_width = CAPTURE_WIDTH;
+		record_info.video_info.dst_height = CAPTURE_HEIGHT;
+		record_info.video_info.frame_rate = CAPTURE_FRAME_RATE;
+		record_info.video_info.src_pix_fmt = AV_PIX_FMT_RGB24;
+		media_file_recorder_->Init(record_info);
+
+		if (gdi_grabber_->StartGrab())
 		{
-			if (gdi_grabber_->StartGrab())
-			{
-				capture_started_ = true;
-				m_ButtonStart.SetWindowTextW(L"停止");
-			}
-			if (media_file_recorder_)
-				media_file_recorder_->Start();
+			record_started_ = true;
+			m_ButtonStart.SetWindowTextW(L"停止");
+			media_file_recorder_->Start();
+			start_capture_time_ = timeGetTime();
 		}
-		else
-		{
-			media_file_recorder_->Stop();
-			gdi_grabber_->StopGrab();
-			m_ButtonStart.SetWindowTextW(L"开始");
-			capture_started_ = false;
-		}
-		
 	}
+	else
+	{
+		record_started_ = false;
+		gdi_grabber_->StopGrab();
+		media_file_recorder_->Stop();
+		m_ButtonStart.SetWindowTextW(L"开始");
+
+		gdi_grabber_->UnRegisterDataCb(this);
+		gdi_grabber_->UnRegisterDataCb(&m_StaticPic);
+
+		media_file_recorder_->UnInit();
+
+		int64_t duration = timeGetTime() - start_capture_time_;
+		char log[128] = { 0 };
+		_snprintf(log, 128, "duration: %lld \n", duration);
+		OutputDebugStringA(log);
+	}
+		
 }
 
 
@@ -225,9 +241,23 @@ void CGdiGrabberTestDlg::OnScreenData(void* data, int width, int height)
 }
 
 
-void CGdiGrabberTestDlg::OnBnClickedButtonFinish()
+void CGdiGrabberTestDlg::OnBnClickedButtonInterrupt()
 {
 	// TODO:  在此添加控件通知处理程序代码
-	if (media_file_recorder_)
-		media_file_recorder_->UnInit();
+	if (record_started_)
+	{
+		if (!record_interrupt_)
+		{
+			media_file_recorder_->Stop();
+			record_interrupt_ = true;
+			GetDlgItem(IDC_BUTTON_INTERRUPT)->SetWindowTextW(L"继续");
+		}
+		else
+		{
+			media_file_recorder_->Start();
+			record_interrupt_ = false;
+			GetDlgItem(IDC_BUTTON_INTERRUPT)->SetWindowTextW(L"暂停");
+		}
+	}
+	
 }

@@ -36,13 +36,14 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	afx_msg void OnBnClickedButtonStart();
 	afx_msg void OnClose();
+	afx_msg void OnBnClickedButtonInterrupt();
 	DECLARE_MESSAGE_MAP()
 private:
 	CVideoStatic m_StaticPic;
 	std::shared_ptr<CScreenGdiGrabber> gdi_grabber_;
 	std::shared_ptr<CMediaFileRecorder> media_file_recorder_;
-	bool capture_started_;
+	bool record_started_;
+	bool record_interrupt_;
 	CButton m_ButtonStart;
-public:
-	afx_msg void OnBnClickedButtonFinish();
+	int64_t start_capture_time_;
 };
