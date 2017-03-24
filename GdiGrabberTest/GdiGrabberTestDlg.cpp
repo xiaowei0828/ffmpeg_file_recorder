@@ -54,6 +54,10 @@ CGdiGrabberTestDlg::CGdiGrabberTestDlg(CWnd* pParent /*=NULL*/)
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	record_started_ = false;
 	record_interrupt_ = false;
+
+	webrtc::Trace::CreateTrace();
+	webrtc::Trace::set_level_filter(webrtc::kTraceWarning | webrtc::kTraceError | webrtc::kTraceCritical);
+	webrtc::Trace::SetTraceCallback(this);
 }
 
 void CGdiGrabberTestDlg::DoDataExchange(CDataExchange* pDX)
@@ -61,6 +65,7 @@ void CGdiGrabberTestDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_STATIC_PIC, m_StaticPic);
 	DDX_Control(pDX, IDC_BUTTON_START, m_ButtonStart);
+	webrtc::Trace::ReturnTrace();
 }
 
 BEGIN_MESSAGE_MAP(CGdiGrabberTestDlg, CDialogEx)
@@ -111,7 +116,7 @@ BOOL CGdiGrabberTestDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO:  在此添加额外的初始化代码
-
+	
 	
 	gdi_grabber_.reset(new CScreenGdiGrabber());
 
@@ -119,9 +124,11 @@ BOOL CGdiGrabberTestDlg::OnInitDialog()
 	
 	audio_dev_module_ = webrtc::CreateAudioDeviceModule(0, webrtc::AudioDeviceModule::AudioLayer::kPlatformDefaultAudio);
 	audio_dev_module_->AddRef();
+	audio_dev_module_->Init();
 	audio_dev_module_->RegisterAudioCallback(this);
 	audio_dev_module_->RegisterEventObserver(this);
-
+	audio_dev_module_->SetRecordingDevice(webrtc::AudioDeviceModule::kDefaultDevice);
+	audio_dev_module_->SetPlayoutDevice(webrtc::AudioDeviceModule::kDefaultDevice);
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -201,8 +208,11 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 
 		gdi_grabber_->StartGrab();
 
-		audio_dev_module_->InitRecording();
-		audio_dev_module_->StartRecording();
+		int32_t ret;
+		ret = audio_dev_module_->InitRecording();
+		ret = audio_dev_module_->StartRecording();
+		ret = audio_dev_module_->InitPlayout();
+		ret = audio_dev_module_->StartCapturPlayout();
 
 		record_started_ = true;
 		m_ButtonStart.SetWindowTextW(L"停止");
@@ -215,6 +225,7 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 		record_started_ = false;
 		gdi_grabber_->StopGrab();
 		audio_dev_module_->StopRecording();
+		audio_dev_module_->StopCapturePlayout();
 		media_file_recorder_->Stop();
 		media_file_recorder_->UnInit();
 		m_ButtonStart.SetWindowTextW(L"开始");
@@ -236,7 +247,7 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 void CGdiGrabberTestDlg::OnClose()
 {
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
-
+	audio_dev_module_->Terminate();
 	audio_dev_module_->Release();
 	CDialogEx::OnClose();
 }
@@ -287,7 +298,11 @@ int32_t CGdiGrabberTestDlg::RecordedDataIsAvailable(const void* audioSamples, co
 	const int32_t clockDrift, const uint32_t currentMicLevel, 
 	const bool keyPressed, uint32_t& newMicLevel)
 {
-
+	if (media_file_recorder_)
+	{
+		media_file_recorder_->FillAudio(audioSamples, nSamples, nBytesPerSample, nChannels, samplesPerSec);
+	}
+	return 0;
 }
 
 int32_t CGdiGrabberTestDlg::RecordedPlayDataIsAvailable(const void* audioSamples, const size_t nSamples, 
@@ -295,15 +310,25 @@ int32_t CGdiGrabberTestDlg::RecordedPlayDataIsAvailable(const void* audioSamples
 	const uint32_t samplesPerSec, const uint32_t totalDelayMS, 
 	const int32_t clockDrift)
 {
-
+	if (media_file_recorder_)
+	{
+		media_file_recorder_->FillAudio(audioSamples, nSamples, nBytesPerSample, nChannels, samplesPerSec);
+	}
+	return 0;
 }
 
 void CGdiGrabberTestDlg::OnErrorIsReported(const ErrorCode error)
 {
-
+	return;
 }
 
 void CGdiGrabberTestDlg::OnWarningIsReported(const WarningCode warning)
 {
 
+}
+
+void CGdiGrabberTestDlg::Print(webrtc::TraceLevel level, const char* message, int length)
+{
+	std::string log(message, length);
+	OutputDebugStringA(log.c_str());
 }

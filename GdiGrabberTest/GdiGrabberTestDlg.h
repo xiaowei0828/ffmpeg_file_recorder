@@ -9,10 +9,14 @@
 #include "MediaFileRecorder.h"
 #include "webrtc/modules/audio_device/include/audio_device.h"
 #include <memory>
+#include "webrtc/system_wrappers/interface/trace.h"
 
 // CGdiGrabberTestDlg 对话框
-class CGdiGrabberTestDlg : public CDialogEx, IGdiGrabberDataCb,
-	public webrtc::AudioTransport, public webrtc::AudioDeviceObserver
+class CGdiGrabberTestDlg : public CDialogEx, 
+	public IGdiGrabberDataCb,
+	public webrtc::AudioTransport, 
+	public webrtc::AudioDeviceObserver,
+	public webrtc::TraceCallback
 {
 // 构造
 public:
@@ -63,6 +67,9 @@ public:
 	/*webrtc::AudioDeviceObserver*/
 	void OnErrorIsReported(const ErrorCode error) override;
 	void OnWarningIsReported(const WarningCode warning) override;
+
+	/*webrtc::TraceCallback*/
+	void Print(webrtc::TraceLevel level, const char* message, int length);
 
 // 实现
 protected:

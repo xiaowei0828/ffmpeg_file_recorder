@@ -123,7 +123,7 @@ void CScreenGdiGrabber::GrabThreadProc()
 		BitBlt(dst_dc_, 0, 0, 
 			width, heigth, src_dc_, 
 			grab_rect_.left, grab_rect_.top,
-			SRCCOPY | CAPTUREBLT);
+			SRCCOPY);
 		for (IGdiGrabberDataCb* cb : vec_data_cb_)
 		{
 			cb->OnScreenData(bmp_buffer_, width, heigth);

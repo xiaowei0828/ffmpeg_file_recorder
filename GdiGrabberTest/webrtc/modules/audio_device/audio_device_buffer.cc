@@ -642,7 +642,7 @@ int32_t AudioDeviceBuffer::DeliverCapturePlayData()
 
 	// Ensure that user has initialized all essential members
 	if ((_playSampleRate == 0) ||
-		(_playSamples == 0) ||
+		(_capturePlaySamples == 0) ||
 		(_playBytesPerSample == 0) /*||
 		(_recChannels == 0)*/)
 	{
@@ -660,7 +660,7 @@ int32_t AudioDeviceBuffer::DeliverCapturePlayData()
 	uint32_t totalDelayMS = _playDelayMS + _recDelayMS;
 
 	res = _ptrCbAudioTransport->RecordedPlayDataIsAvailable(&_capturePlayBuffer[0],
-		_playSamples,
+		_capturePlaySamples,
 		_playBytesPerSample,
 		_playChannels,
 		_playSampleRate,

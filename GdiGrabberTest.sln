@@ -15,6 +15,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rtc_base_approved", "GdiGra
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio_device", "GdiGrabberTest\webrtc\modules\audio_device.vcxproj", "{E7E494C8-F0D0-4376-4006-C691BB4233EF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "webrtc_common", "GdiGrabberTest\webrtc\webrtc_common.vcxproj", "{4E00D9E2-1F74-8D2E-1878-DCFE215138F5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -61,6 +63,14 @@ Global
 		{E7E494C8-F0D0-4376-4006-C691BB4233EF}.Release|Win32.Build.0 = Release|Win32
 		{E7E494C8-F0D0-4376-4006-C691BB4233EF}.Release|x64.ActiveCfg = Release|x64
 		{E7E494C8-F0D0-4376-4006-C691BB4233EF}.Release|x64.Build.0 = Release|x64
+		{4E00D9E2-1F74-8D2E-1878-DCFE215138F5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4E00D9E2-1F74-8D2E-1878-DCFE215138F5}.Debug|Win32.Build.0 = Debug|Win32
+		{4E00D9E2-1F74-8D2E-1878-DCFE215138F5}.Debug|x64.ActiveCfg = Debug|x64
+		{4E00D9E2-1F74-8D2E-1878-DCFE215138F5}.Debug|x64.Build.0 = Debug|x64
+		{4E00D9E2-1F74-8D2E-1878-DCFE215138F5}.Release|Win32.ActiveCfg = Release|Win32
+		{4E00D9E2-1F74-8D2E-1878-DCFE215138F5}.Release|Win32.Build.0 = Release|Win32
+		{4E00D9E2-1F74-8D2E-1878-DCFE215138F5}.Release|x64.ActiveCfg = Release|x64
+		{4E00D9E2-1F74-8D2E-1878-DCFE215138F5}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -70,5 +80,6 @@ Global
 		{39FE2BB0-C2E7-DB9C-D514-19B221F3CA00} = {43F4CEB3-E01F-4C25-99C5-C7E1949D924A}
 		{510DEDDC-ED2F-0A3B-ABE1-F7F1E6D75CF8} = {43F4CEB3-E01F-4C25-99C5-C7E1949D924A}
 		{E7E494C8-F0D0-4376-4006-C691BB4233EF} = {43F4CEB3-E01F-4C25-99C5-C7E1949D924A}
+		{4E00D9E2-1F74-8D2E-1878-DCFE215138F5} = {43F4CEB3-E01F-4C25-99C5-C7E1949D924A}
 	EndGlobalSection
 EndGlobal

@@ -17,7 +17,7 @@ extern "C"
 #pragma comment(lib, "avutil.lib")
 #pragma comment(lib, "avdevice.lib")
 #pragma comment(lib, "avfilter.lib")
-
+#pragma comment(lib, "swresample.lib")
 	//#pragma comment(lib, "avfilter.lib")
 	//#pragma comment(lib, "postproc.lib")
 	//#pragma comment(lib, "swresample.lib")
@@ -85,6 +85,11 @@ private:
 	void StartWriteFileThread();
 	void StopWriteFileThread();
 	void WriteFileThreadProc();
+
+	void ResampleAndSave(const void* audioSamples, 
+		int src_nb_samples, int src_rate, 
+		int src_nb_channels, int src_ch_layout,
+		AVSampleFormat src_sample_fmt);
 
 private:
 	bool m_bInited;
