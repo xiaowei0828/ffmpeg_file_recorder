@@ -98,10 +98,11 @@ class AudioDeviceModuleImpl : public AudioDeviceModule {
   int32_t StopRecording() override;
   bool Recording() const override;
 
-  /*added by wrb, for captureing playout*/
-  int32_t StartCapturPlayout() override;
+  /*for captureing playout*/
+  int32_t InitCapturePlayout() override;
+  int32_t StartCapturePlayout() override;
   int32_t StopCapturePlayout() override;
-  bool CaptureingPlayout() const override;
+  bool CapturingPlayout() const override;
 
   // Microphone Automatic Gain Control (AGC)
   int32_t SetAGC(bool enable) override;

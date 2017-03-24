@@ -55,6 +55,8 @@ private:
 	LARGE_INTEGER perf_freq_;
 	int64_t last_tick_count_;
 	int64_t frame_interval_tick_;
+
+	HANDLE m_hGrabTimer;
 };
 
 #endif

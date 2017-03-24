@@ -1551,10 +1551,16 @@ bool AudioDeviceModuleImpl::Recording() const
 }
 
 /*added by wrb, for capture playout*/
-int32_t AudioDeviceModuleImpl::StartCapturPlayout()
+int32_t AudioDeviceModuleImpl::InitCapturePlayout()
 {
 	CHECK_INITIALIZED();
-	return (_ptrAudioDevice->StartCapturPlayout());
+	return (_ptrAudioDevice->InitCapturePlayout());
+}
+
+int32_t AudioDeviceModuleImpl::StartCapturePlayout()
+{
+	CHECK_INITIALIZED();
+	return (_ptrAudioDevice->StartCapturePlayout());
 }
 
 int32_t AudioDeviceModuleImpl::StopCapturePlayout()
@@ -1563,10 +1569,10 @@ int32_t AudioDeviceModuleImpl::StopCapturePlayout()
 	return (_ptrAudioDevice->StopCapturePlayout());
 }
 
-bool AudioDeviceModuleImpl::CaptureingPlayout() const
+bool AudioDeviceModuleImpl::CapturingPlayout() const
 {
 	CHECK_INITIALIZED_BOOL();
-	return (_ptrAudioDevice->CaptureingPlayout());
+	return (_ptrAudioDevice->CapturingPlayout());
 }
 /*end*/
 

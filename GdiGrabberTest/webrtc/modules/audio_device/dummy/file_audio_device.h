@@ -83,9 +83,10 @@ class FileAudioDevice : public AudioDeviceGeneric {
   bool Recording() const override;
 
   /*added by wrb, for captureing playout*/
-  int32_t StartCapturPlayout() override { return -1; };
+  int32_t InitCapturePlayout() override { return -1; }
+  int32_t StartCapturePlayout() override { return -1; };
   int32_t StopCapturePlayout() override { return -1; };
-  bool CaptureingPlayout() const override { return false;  };
+  bool CapturingPlayout() const override { return false;  };
 
   // Microphone Automatic Gain Control (AGC)
   int32_t SetAGC(bool enable) override;

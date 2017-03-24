@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.40629.0
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GdiGrabberTest", "GdiGrabberTest\GdiGrabberTest.vcxproj", "{C258013A-FC5D-4CD4-8E11-4EF55D4DE6A6}"
 EndProject
@@ -81,5 +81,8 @@ Global
 		{510DEDDC-ED2F-0A3B-ABE1-F7F1E6D75CF8} = {43F4CEB3-E01F-4C25-99C5-C7E1949D924A}
 		{E7E494C8-F0D0-4376-4006-C691BB4233EF} = {43F4CEB3-E01F-4C25-99C5-C7E1949D924A}
 		{4E00D9E2-1F74-8D2E-1878-DCFE215138F5} = {43F4CEB3-E01F-4C25-99C5-C7E1949D924A}
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal

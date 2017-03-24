@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "ScreenGdiGrabber.h"
+#include <MMSystem.h>
 
 CScreenGdiGrabber::CScreenGdiGrabber()
 {
@@ -77,6 +78,9 @@ bool CScreenGdiGrabber::StartGrab()
 	}
 
 	SelectObject(dst_dc_, hbmp_);
+
+	m_hGrabTimer = CreateWaitableTimer(NULL, FALSE, NULL);
+
 	StartGrabThread();
 	started_ = true;
 	return true;
@@ -112,29 +116,39 @@ void CScreenGdiGrabber::GrabThreadProc()
 {
 	while (run_)
 	{
-		int64_t interval_tick = GetCurrentTickCount() -last_tick_count_;
-		while (interval_tick < frame_interval_tick_)
-		{
-			interval_tick = GetCurrentTickCount() -last_tick_count_;
-		}
-		last_tick_count_ = GetCurrentTickCount();
 		int width = grab_rect_.right - grab_rect_.left;
 		int heigth = grab_rect_.bottom - grab_rect_.top;
 		BitBlt(dst_dc_, 0, 0, 
 			width, heigth, src_dc_, 
 			grab_rect_.left, grab_rect_.top,
 			SRCCOPY);
+
+		int64_t interval_tick = GetCurrentTickCount() - last_tick_count_;
+		if (interval_tick < frame_interval_tick_)
+		{
+			LARGE_INTEGER first_fire_time;
+			first_fire_time.QuadPart = -((frame_interval_tick_ - interval_tick) * 10000000  / perf_freq_.QuadPart);
+			SetWaitableTimer(m_hGrabTimer, &first_fire_time, 0, NULL, NULL, FALSE);
+			WaitForSingleObject(m_hGrabTimer, INFINITE);
+			CancelWaitableTimer(m_hGrabTimer);
+			/*Sleep(5);
+			interval_tick = GetCurrentTickCount() - last_tick_count_;*/
+		}
+
+		char log[128] = { 0 };
+		_snprintf(log, 128, "required interval: %lld, interval: %lld\n",
+			frame_interval_tick_ * 1000 / perf_freq_.QuadPart,
+			(GetCurrentTickCount() - last_tick_count_) * 1000 / perf_freq_.QuadPart);
+		OutputDebugStringA(log);
+
+		last_tick_count_ = GetCurrentTickCount();
+
 		for (IGdiGrabberDataCb* cb : vec_data_cb_)
 		{
 			cb->OnScreenData(bmp_buffer_, width, heigth);
 		}
 
-		char log[128] = { 0 };
-		_snprintf(log, 128, "required interval: %lld, interval: %lld\n",
-			frame_interval_tick_ * 1000/perf_freq_.QuadPart,
-			interval_tick*1000/perf_freq_.QuadPart);
-
-		OutputDebugStringA(log);
+		
 	}
 }
 

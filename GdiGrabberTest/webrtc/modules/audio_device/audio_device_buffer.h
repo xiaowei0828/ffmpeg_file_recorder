@@ -124,7 +124,7 @@ private:
 	/*added by wrb, for capturing playout*/
 	size_t             _capturePlaySamples;
 	size_t             _capturePlaySize;
-	int8_t             _capturePlayBuffer[kMaxBufferSizeBytes];
+	int8_t*            _capturePlayBuffer[kMaxBufferSizeBytes];
 };
 
 }  // namespace webrtc

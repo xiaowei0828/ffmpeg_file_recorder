@@ -28,6 +28,7 @@ extern "C"
 
 #include <thread>
 #include <atomic>
+#include <vector>
 
 
 class CMediaFileRecorder
@@ -49,7 +50,6 @@ public:
 
 		struct Audio
 		{
-
 		}audio_info;
 		
 		RecordInfo()
@@ -73,9 +73,9 @@ public:
 	bool Start();
 	void Stop();
 	void FillVideo(void* data);
-	void FillAudio(const void* audioSamples, const size_t nSamples,
-		const size_t nBytesPerSample, const uint8_t nChannels,
-		const uint32_t samplesPerSec);
+	void FillAudio(const void* audioSamples, 
+		int nb_samples, int sample_rate, 
+		int64_t chl_layout, AVSampleFormat sample_fmt);
 
 private:
 	bool InitVideoRecord();
@@ -85,6 +85,7 @@ private:
 	void StartWriteFileThread();
 	void StopWriteFileThread();
 	void WriteFileThreadProc();
+	void AuidoWriteFileThreadProc();
 
 	void ResampleAndSave(const void* audioSamples, 
 		int src_nb_samples, int src_rate, 
@@ -110,6 +111,7 @@ private:
 	AVFrame* m_pAudioFrame;
 
 	SwsContext* m_pConvertCtx;
+	SwrContext* m_pAudioConvertCtx;
 
 	uint8_t* m_pAudioBuffer;
 	int m_nAudioSize;
@@ -126,12 +128,18 @@ private:
 	int64_t m_nAudioFrameIndex;
 
 	std::thread m_WriteFileThread;
+	std::thread m_WriteAudioThread;
 
 	int64_t m_nWriteFrame;
 	int64_t m_nDiscardFrame;
 
 	int64_t m_nStartTime;
 	int64_t m_nDuration;
+
+	int64_t m_nSavedAudioSamples;
+	int64_t m_nDiscardAudioSamples;
+
+	CRITICAL_SECTION m_WriteFileSection;
 };
 
 

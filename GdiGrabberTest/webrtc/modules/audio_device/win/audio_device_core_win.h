@@ -129,11 +129,6 @@ public:
     virtual int32_t StopRecording();
     virtual bool Recording() const;
 
-	/*added by wrb, for captureing playout*/
-	int32_t StartCapturPlayout() override;
-	int32_t StopCapturePlayout() override;
-	bool CaptureingPlayout() const override;
-
     // Microphone Automatic Gain Control (AGC)
     virtual int32_t SetAGC(bool enable);
     virtual bool AGC() const;
@@ -304,8 +299,6 @@ private:  // WASAPI
     IAudioEndpointVolume*                   _ptrCaptureVolume;
     ISimpleAudioVolume*                     _ptrRenderSimpleVolume;
 
-	IAudioCaptureClient*                    _ptrCapturePlayClient;
-
     // DirectX Media Object (DMO) for the built-in AEC.
     rtc::scoped_refptr<IMediaObject> _dmo;
     rtc::scoped_refptr<IMediaBuffer> _mediaBuffer;
@@ -320,12 +313,6 @@ private:  // WASAPI
     HANDLE                                  _hRecThread;
     HANDLE                                  _hCaptureStartedEvent;
     HANDLE                                  _hShutdownCaptureEvent;
-
-	/*added by wrb, for capturing playout*/
-	//HANDLE                                  _hCapturePlaySamplesReadyEvent;
-	HANDLE                                  _hCapturePlayThread;
-	HANDLE                                  _hCapturePlayStartedEvent;
-	HANDLE                                  _hShutdownCapturePlayEvent;
 
     HANDLE                                  _hGetCaptureVolumeThread;
     HANDLE                                  _hSetCaptureVolumeThread;
@@ -361,8 +348,7 @@ private:
     bool                                    _initialized;
     bool                                    _recording;
     bool                                    _playing;
-	/*added by wrb, for capturing playout*/
-	bool                                    _capturingPlay;
+	
     bool                                    _recIsInitialized;
     bool                                    _playIsInitialized;
     bool                                    _speakerIsInitialized;
@@ -389,6 +375,24 @@ private:
     uint16_t                          _newMicLevel;
 
     mutable char                            _str[512];
+
+	/*added by wrb, for capturing playout*/
+
+	/*added by wrb, for captureing playout*/
+public:
+	int32_t InitCapturePlayout() override;
+	int32_t StartCapturePlayout() override;
+	int32_t StopCapturePlayout() override;
+	bool CapturingPlayout() const override;
+
+private:
+	IAudioCaptureClient*                    _ptrCapturePlayClient;
+	bool                                    _capturePlayIsInitialized;
+	bool                                    _capturingPlay;
+	HANDLE                                  _hCapturePlayThread;
+	HANDLE                                  _hCapturePlayStartedEvent;
+	HANDLE                                  _hShutdownCapturePlayEvent;
+	HANDLE                                  _hCapturePlayTimer;
 };
 
 #endif    // #if (_MSC_VER >= 1400)

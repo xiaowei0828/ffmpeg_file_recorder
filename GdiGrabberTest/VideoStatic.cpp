@@ -27,6 +27,7 @@ END_MESSAGE_MAP()
 
 void CVideoStatic::OnScreenData(void* data, int width, int height)
 {
+	return;
 	if (width_ != width || height_ != height)
 	{
 		if (dib_.is_valid())

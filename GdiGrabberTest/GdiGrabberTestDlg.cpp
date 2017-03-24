@@ -209,10 +209,11 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 		gdi_grabber_->StartGrab();
 
 		int32_t ret;
-		ret = audio_dev_module_->InitRecording();
-		ret = audio_dev_module_->StartRecording();
-		ret = audio_dev_module_->InitPlayout();
-		ret = audio_dev_module_->StartCapturPlayout();
+		//ret = audio_dev_module_->InitRecording();
+		//ret = audio_dev_module_->StartRecording();
+		//audio_dev_module_->SetStereoPlayout(false);
+		ret = audio_dev_module_->InitCapturePlayout();
+		ret = audio_dev_module_->StartCapturePlayout();
 
 		record_started_ = true;
 		m_ButtonStart.SetWindowTextW(L"ֹͣ");
@@ -224,7 +225,7 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 	{
 		record_started_ = false;
 		gdi_grabber_->StopGrab();
-		audio_dev_module_->StopRecording();
+		//audio_dev_module_->StopRecording();
 		audio_dev_module_->StopCapturePlayout();
 		media_file_recorder_->Stop();
 		media_file_recorder_->UnInit();
@@ -300,7 +301,20 @@ int32_t CGdiGrabberTestDlg::RecordedDataIsAvailable(const void* audioSamples, co
 {
 	if (media_file_recorder_)
 	{
-		media_file_recorder_->FillAudio(audioSamples, nSamples, nBytesPerSample, nChannels, samplesPerSec);
+		int64_t chl_layout;
+		if (nChannels == 1)
+			chl_layout = AV_CH_LAYOUT_MONO;
+		else if (nChannels == 2)
+			chl_layout = AV_CH_LAYOUT_STEREO;
+		else
+		{
+			OutputDebugStringA("Invalid channel type");
+			return 0;
+		}
+
+		media_file_recorder_->FillAudio(audioSamples, nSamples, 
+			samplesPerSec, chl_layout, 
+			AVSampleFormat::AV_SAMPLE_FMT_S16);
 	}
 	return 0;
 }
@@ -312,7 +326,20 @@ int32_t CGdiGrabberTestDlg::RecordedPlayDataIsAvailable(const void* audioSamples
 {
 	if (media_file_recorder_)
 	{
-		media_file_recorder_->FillAudio(audioSamples, nSamples, nBytesPerSample, nChannels, samplesPerSec);
+		int64_t chl_layout;
+		if (nChannels == 1)
+			chl_layout = AV_CH_LAYOUT_MONO;
+		else if (nChannels == 2)
+			chl_layout = AV_CH_LAYOUT_STEREO;
+		else
+		{
+			OutputDebugStringA("Invalid channel type");
+			return 0;
+		}
+
+		media_file_recorder_->FillAudio(audioSamples, nSamples,
+			samplesPerSec, chl_layout,
+			AVSampleFormat::AV_SAMPLE_FMT_S16);
 	}
 	return 0;
 }

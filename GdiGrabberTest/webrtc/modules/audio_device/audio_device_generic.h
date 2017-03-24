@@ -61,11 +61,6 @@ class AudioDeviceGeneric {
   virtual int32_t StopRecording() = 0;
   virtual bool Recording() const = 0;
 
-  /*added by wrb, for captureing playout*/
-  virtual int32_t StartCapturPlayout() = 0;
-  virtual int32_t StopCapturePlayout() = 0;
-  virtual bool CaptureingPlayout() const =0;
-
   // Microphone Automatic Gain Control (AGC)
   virtual int32_t SetAGC(bool enable) = 0;
   virtual bool AGC() const = 0;
@@ -175,6 +170,13 @@ class AudioDeviceGeneric {
   virtual void AttachAudioBuffer(AudioDeviceBuffer* audioBuffer) = 0;
 
   virtual ~AudioDeviceGeneric() {}
+
+  /*for captureing playout*/
+  virtual int32_t InitCapturePlayout() = 0;
+  virtual int32_t StartCapturePlayout() = 0;
+  virtual int32_t StopCapturePlayout() = 0;
+  virtual bool CapturingPlayout() const = 0;
+
 };
 
 }  // namespace webrtc

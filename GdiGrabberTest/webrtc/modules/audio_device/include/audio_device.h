@@ -98,12 +98,6 @@ class AudioDeviceModule : public RefCountedModule {
   virtual int32_t StopRecording() = 0;
   virtual bool Recording() const = 0;
 
-  /*added by wrb*/
-  //for capture playout data
-  virtual int32_t StartCapturPlayout() = 0;
-  virtual int32_t StopCapturePlayout() = 0;
-  virtual bool CaptureingPlayout() const = 0;
-
   // Microphone Automatic Gain Control (AGC)
   virtual int32_t SetAGC(bool enable) = 0;
   virtual bool AGC() const = 0;
@@ -216,6 +210,12 @@ class AudioDeviceModule : public RefCountedModule {
   virtual int GetRecordAudioParameters(AudioParameters* params) const {
     return -1;
   }
+
+  //for capture playout data
+  virtual int32_t InitCapturePlayout() = 0;
+  virtual int32_t StartCapturePlayout() = 0;
+  virtual int32_t StopCapturePlayout() = 0;
+  virtual bool CapturingPlayout() const = 0;
 
  protected:
   virtual ~AudioDeviceModule() {}
