@@ -82,7 +82,7 @@ END_MESSAGE_MAP()
 #define CAPTURE_TOP 0
 #define CAPTURE_WIDTH 1920
 #define CAPTURE_HEIGHT 1080
-#define CAPTURE_FRAME_RATE 15
+#define CAPTURE_FRAME_RATE 20
 
 // CGdiGrabberTestDlg 消息处理程序
 
@@ -203,7 +203,7 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 		record_info.video_info.dst_width = CAPTURE_WIDTH;
 		record_info.video_info.dst_height = CAPTURE_HEIGHT;
 		record_info.video_info.frame_rate = CAPTURE_FRAME_RATE;
-		record_info.video_info.src_pix_fmt = AV_PIX_FMT_RGB24;
+		record_info.video_info.src_pix_fmt = AV_PIX_FMT_BGR24;
 		media_file_recorder_->Init(record_info);
 
 		gdi_grabber_->StartGrab();

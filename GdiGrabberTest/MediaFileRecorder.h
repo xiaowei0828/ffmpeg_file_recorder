@@ -29,7 +29,7 @@ extern "C"
 #include <thread>
 #include <atomic>
 #include <vector>
-
+#include <list>
 
 class CMediaFileRecorder
 {
@@ -64,6 +64,7 @@ public:
 			video_info.src_pix_fmt = AV_PIX_FMT_NONE;
 		}
 	};
+
 public:
 	CMediaFileRecorder();
 	~CMediaFileRecorder();
@@ -84,8 +85,11 @@ private:
 	void UnInitAudioRecord();
 	void StartWriteFileThread();
 	void StopWriteFileThread();
-	void WriteFileThreadProc();
+	void VideoWriteFileThreadProc();
 	void AuidoWriteFileThreadProc();
+
+	void EncodeAndWriteVideo();
+	void EncodeAndWriteAudio();
 
 	void ResampleAndSave(const void* audioSamples, 
 		int src_nb_samples, int src_rate, 
@@ -127,7 +131,7 @@ private:
 	int64_t m_nVideoFrameIndex;
 	int64_t m_nAudioFrameIndex;
 
-	std::thread m_WriteFileThread;
+	std::thread m_WriteVideoThread;
 	std::thread m_WriteAudioThread;
 
 	int64_t m_nWriteFrame;
