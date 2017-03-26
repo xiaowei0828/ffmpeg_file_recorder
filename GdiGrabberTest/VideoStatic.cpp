@@ -25,7 +25,7 @@ BEGIN_MESSAGE_MAP(CVideoStatic, CStatic)
 	ON_WM_PAINT()
 END_MESSAGE_MAP()
 
-void CVideoStatic::OnScreenData(void* data, int width, int height)
+void CVideoStatic::OnScreenData(void* data, int width, int height, ScreenGrabber::PIX_FMT pix_fmt)
 {
 	return;
 	if (width_ != width || height_ != height)

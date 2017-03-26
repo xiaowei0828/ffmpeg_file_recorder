@@ -5,15 +5,15 @@
 #pragma once
 #include "afxwin.h"
 #include "VideoStatic.h"
-#include "ScreenGdiGrabber.h"
-#include "MediaFileRecorder.h"
+#include "IScreenGrabber.h"
+#include "CMediaFileRecorder.h"
 #include "webrtc/modules/audio_device/include/audio_device.h"
 #include <memory>
 #include "webrtc/system_wrappers/interface/trace.h"
 
 // CGdiGrabberTestDlg 对话框
 class CGdiGrabberTestDlg : public CDialogEx, 
-	public IGdiGrabberDataCb,
+	public ScreenGrabber::IScreenGrabberDataCb,
 	public webrtc::AudioTransport, 
 	public webrtc::AudioDeviceObserver,
 	public webrtc::TraceCallback
@@ -28,7 +28,7 @@ public:
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
-	void OnScreenData(void* data, int width, int height) override;
+	void OnScreenData(void* data, int width, int height, ScreenGrabber::PIX_FMT pix_fmt) override;
 
 public:
 	/*webrtc::AudioTransport*/
@@ -86,7 +86,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	CVideoStatic m_StaticPic;
-	std::shared_ptr<CScreenGdiGrabber> gdi_grabber_;
+	std::shared_ptr<ScreenGrabber::IScreenGrabber> screen_grabber_;
 	std::shared_ptr<CMediaFileRecorder> media_file_recorder_;
 
 	webrtc::AudioDeviceModule* audio_dev_module_;

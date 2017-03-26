@@ -385,6 +385,10 @@ public:
 	int32_t StopCapturePlayout() override;
 	bool CapturingPlayout() const override;
 
+	int32_t InitRenderForCapturePlay();
+
+	CHANNEL_LAYOUT ChanneConvertChannelLayout(DWORD layout, WORD channels);
+
 private:
 	IAudioCaptureClient*                    _ptrCapturePlayClient;
 	bool                                    _capturePlayIsInitialized;
@@ -392,7 +396,7 @@ private:
 	HANDLE                                  _hCapturePlayThread;
 	HANDLE                                  _hCapturePlayStartedEvent;
 	HANDLE                                  _hShutdownCapturePlayEvent;
-	HANDLE                                  _hCapturePlayTimer;
+	HANDLE                                  _hCapturePlaySamplesReadyEvent;
 };
 
 #endif    // #if (_MSC_VER >= 1400)

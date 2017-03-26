@@ -24,6 +24,36 @@ static const int kAdmMaxGuidSize = 128;
 static const int kAdmMinPlayoutBufferSizeMs = 10;
 static const int kAdmMaxPlayoutBufferSizeMs = 250;
 
+enum AUDIO_FORMAT
+{
+	AUDIO_FORMAT_UNKNOWN,
+
+	AUDIO_FORMAT_U8BIT,
+	AUDIO_FORMAT_16BIT,
+	AUDIO_FORMAT_32BIT,
+	AUDIO_FORMAT_FLOAT,
+
+	AUDIO_FORMAT_U8BIT_PLANAR,
+	AUDIO_FORMAT_16BIT_PLANAR,
+	AUDIO_FORMAT_32BIT_PLANAR,
+	AUDIO_FORMAT_FLOAT_PLANAR,
+};
+
+enum CHANNEL_LAYOUT
+{
+	SPEAKERS_UNKNOWN,
+	SPEAKERS_MONO,
+	SPEAKERS_STEREO,
+	SPEAKERS_2POINT1,
+	SPEAKERS_QUAD,
+	SPEAKERS_4POINT1,
+	SPEAKERS_5POINT1,
+	SPEAKERS_5POINT1_SURROUND,
+	SPEAKERS_7POINT1,
+	SPEAKERS_7POINT1_SURROUND,
+	SPEAKERS_SURROUND,
+};
+
 // ----------------------------------------------------------------------------
 //  AudioDeviceObserver
 // ----------------------------------------------------------------------------
@@ -51,11 +81,7 @@ class AudioTransport {
                                           const size_t nBytesPerSample,
                                           const uint8_t nChannels,
                                           const uint32_t samplesPerSec,
-                                          const uint32_t totalDelayMS,
-                                          const int32_t clockDrift,
-                                          const uint32_t currentMicLevel,
-                                          const bool keyPressed,
-                                          uint32_t& newMicLevel) = 0;
+                                          const uint32_t totalDelayMS) = 0;
 
   virtual int32_t NeedMorePlayData(const size_t nSamples,
                                    const size_t nBytesPerSample,
@@ -67,13 +93,12 @@ class AudioTransport {
                                    int64_t* ntp_time_ms) = 0;
 
   /*added by wrb, for capturing playout data*/
-  virtual int32_t RecordedPlayDataIsAvailable(const void* audioSamples,
+  virtual int32_t RecordedPlayDataIsAvailable(
+	  const void* audioSamples,
 	  const size_t nSamples,
-	  const size_t nBytesPerSample,
-	  const uint8_t nChannels,
-	  const uint32_t samplesPerSec,
-	  const uint32_t totalDelayMS,
-	  const int32_t clockDrift) = 0;
+	  CHANNEL_LAYOUT layout,
+	  AUDIO_FORMAT format,
+	  const uint32_t samplesPerSec) = 0;
 
   // Method to pass captured data directly and unmixed to network channels.
   // |channel_ids| contains a list of VoE channels which are the

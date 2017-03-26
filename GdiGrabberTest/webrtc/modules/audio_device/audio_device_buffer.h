@@ -14,6 +14,7 @@
 #include "webrtc/modules/audio_device/include/audio_device.h"
 #include "webrtc/system_wrappers/interface/file_wrapper.h"
 #include "webrtc/typedefs.h"
+#include <MMSystem.h>
 
 namespace webrtc {
 class CriticalSectionWrapper;
@@ -74,6 +75,12 @@ public:
 		size_t nSamples);
 	int32_t DeliverCapturePlayData();
 
+	void SetCapturePlayChlLayout(CHANNEL_LAYOUT layout);
+
+	void SetCapturePlaySampleRate(uint32_t fsHz);
+
+	void SetCapturePlayAudioFormat(AUDIO_FORMAT audioFormat);
+
 private:
     int32_t                   _id;
     CriticalSectionWrapper&         _critSect;
@@ -125,6 +132,10 @@ private:
 	size_t             _capturePlaySamples;
 	size_t             _capturePlaySize;
 	int8_t*            _capturePlayBuffer[kMaxBufferSizeBytes];
+
+	uint32_t _capturePlaySampleRate;
+	CHANNEL_LAYOUT _capturePlayChannelLayout;
+	AUDIO_FORMAT   _capturePlayAudioFormat;
 };
 
 }  // namespace webrtc

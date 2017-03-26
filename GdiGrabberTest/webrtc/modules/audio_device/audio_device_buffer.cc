@@ -605,7 +605,15 @@ int32_t AudioDeviceBuffer::SetCapturePlayBuffer(const void* audioBuffer, size_t 
 	//if (_recChannel == AudioDeviceModule::kChannelBoth)
 	//{
 		// (default) copy the complete input buffer to the local buffer
+	if (audioBuffer == NULL)
+	{
+		memset(&_capturePlayBuffer[0], 0, _capturePlaySize);
+	}
+	else
+	{
 		memcpy(&_capturePlayBuffer[0], audioBuffer, _capturePlaySize);
+	}
+		
 	//}
 	//else
 	//{
@@ -663,10 +671,23 @@ int32_t AudioDeviceBuffer::DeliverCapturePlayData()
 		_capturePlaySamples,
 		_playBytesPerSample,
 		_playChannels,
-		_playSampleRate,
-		totalDelayMS,
-		_clockDrift);
+		_playSampleRate);
 	return 0;
+}
+
+void AudioDeviceBuffer::SetCapturePlayChlLayout(CHANNEL_LAYOUT layout)
+{
+	_capturePlayChannelLayout = layout;
+}
+
+void AudioDeviceBuffer::SetCapturePlaySampleRate(uint32_t fsHz)
+{
+	_capturePlaySampleRate = fsHz;
+}
+
+void AudioDeviceBuffer::SetCapturePlayAudioFormat(AUDIO_FORMAT audioFormat)
+{
+	_capturePlayAudioFormat = audioFormat;
 }
 
 }  // namespace webrtc

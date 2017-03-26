@@ -359,9 +359,9 @@ bool AudioDeviceWindowsCore::CoreAudioIsSupported()
         for (uint16_t i = 0; i < numDevsPlay; i++)
         {
             ok |= p->SetPlayoutDevice(i);
-            temp_ok = p->PlayoutIsAvailable(available);
-            ok |= temp_ok;
-            ok |= (available == false);
+			temp_ok = p->PlayoutIsAvailable(available);
+			ok |= temp_ok;
+			ok |= (available == false);
             if (available)
             {
                 ok |= p->InitSpeaker();
@@ -477,8 +477,7 @@ AudioDeviceWindowsCore::AudioDeviceWindowsCore(const int32_t id) :
 	_capturingPlay(false),
 	_hCapturePlayThread(NULL),
 	_hCapturePlayStartedEvent(NULL),
-	_hShutdownCapturePlayEvent(NULL),
-	_hCapturePlayTimer(NULL)
+	_hShutdownCapturePlayEvent(NULL)
 {
     WEBRTC_TRACE(kTraceMemory, kTraceAudioDevice, id, "%s created", __FUNCTION__);
     //assert(_comInit.succeeded());
@@ -524,8 +523,9 @@ AudioDeviceWindowsCore::AudioDeviceWindowsCore(const int32_t id) :
     _hSetCaptureVolumeEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
 	/*added by wrb, for capturing playout*/
-	_hCapturePlayStartedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	_hShutdownCapturePlayEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	_hCapturePlayStartedEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	_hShutdownCapturePlayEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	_hCapturePlaySamplesReadyEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
     _perfCounterFreq.QuadPart = 1;
     _perfCounterFactor = 0.0;
@@ -645,6 +645,12 @@ AudioDeviceWindowsCore::~AudioDeviceWindowsCore()
 		_hShutdownCapturePlayEvent = NULL;
 	}
 
+	if (NULL != _hCapturePlaySamplesReadyEvent)
+	{
+		CloseHandle(_hCapturePlaySamplesReadyEvent);
+		_hCapturePlaySamplesReadyEvent = NULL;
+	}
+
     if (_avrtLibrary)
     {
         BOOL freeOK = FreeLibrary(_avrtLibrary);
@@ -756,6 +762,7 @@ int32_t AudioDeviceWindowsCore::Terminate()
     SAFE_RELEASE(_ptrCaptureClient);
     SAFE_RELEASE(_ptrCaptureVolume);
     SAFE_RELEASE(_ptrRenderSimpleVolume);
+	SAFE_RELEASE(_ptrCapturePlayClient);
 
     return 0;
 }
@@ -5217,47 +5224,50 @@ int32_t AudioDeviceWindowsCore::InitCapturePlayout()
 		WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id, "cbSize         : %d", pWfxOut->cbSize);
 	}
 
+	
 	// Set wave format
-	Wfx.wFormatTag = WAVE_FORMAT_PCM;
-	Wfx.wBitsPerSample = 16;
-	Wfx.cbSize = 0;
+	//Wfx.wFormatTag = WAVE_FORMAT_PCM;
+	//Wfx.wBitsPerSample = 16;
+	//Wfx.cbSize = 0;
 
-	const int freqs[] = { 48000, 44100, 16000, 96000, 32000, 8000 };
-	hr = S_FALSE;
+	//const int freqs[] = { 48000, 44100, 16000, 96000, 32000, 8000 };
+	//hr = S_FALSE;
 
-	// Iterate over frequencies and channels, in order of priority
-	for (int freq = 0; freq < sizeof(freqs) / sizeof(freqs[0]); freq++)
-	{
-		for (int chan = 0; chan < sizeof(_playChannelsPrioList) / sizeof(_playChannelsPrioList[0]); chan++)
-		{
-			Wfx.nChannels = _playChannelsPrioList[chan];
-			Wfx.nSamplesPerSec = freqs[freq];
-			Wfx.nBlockAlign = Wfx.nChannels * Wfx.wBitsPerSample / 8;
-			Wfx.nAvgBytesPerSec = Wfx.nSamplesPerSec * Wfx.nBlockAlign;
-			// If the method succeeds and the audio endpoint device supports the specified stream format,
-			// it returns S_OK. If the method succeeds and provides a closest match to the specified format,
-			// it returns S_FALSE.
-			hr = _ptrClientOut->IsFormatSupported(
-				AUDCLNT_SHAREMODE_SHARED,
-				&Wfx,
-				&pWfxClosestMatch);
-			if (hr == S_OK)
-			{
-				break;
-			}
-			else
-			{
-				WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id, "nChannels=%d, nSamplesPerSec=%d is not supported, err:0x%x",
-					Wfx.nChannels, Wfx.nSamplesPerSec, hr);
-			}
-		}
-		if (hr == S_OK)
-			break;
-	}
+	//// Iterate over frequencies and channels, in order of priority
+	//for (int freq = 0; freq < sizeof(freqs) / sizeof(freqs[0]); freq++)
+	//{
+	//	for (int chan = 0; chan < sizeof(_playChannelsPrioList) / sizeof(_playChannelsPrioList[0]); chan++)
+	//	{
+	//		Wfx.nChannels = _playChannelsPrioList[chan];
+	//		Wfx.nSamplesPerSec = freqs[freq];
+	//		Wfx.nBlockAlign = Wfx.nChannels * Wfx.wBitsPerSample / 8;
+	//		Wfx.nAvgBytesPerSec = Wfx.nSamplesPerSec * Wfx.nBlockAlign;
+	//		// If the method succeeds and the audio endpoint device supports the specified stream format,
+	//		// it returns S_OK. If the method succeeds and provides a closest match to the specified format,
+	//		// it returns S_FALSE.
+	//		hr = _ptrClientOut->IsFormatSupported(
+	//			AUDCLNT_SHAREMODE_SHARED,
+	//			&Wfx,
+	//			&pWfxClosestMatch);
+	//		if (hr == S_OK)
+	//		{
+	//			break;
+	//		}
+	//		else
+	//		{
+	//			WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id, "nChannels=%d, nSamplesPerSec=%d is not supported, err:0x%x",
+	//				Wfx.nChannels, Wfx.nSamplesPerSec, hr);
+	//		}
+	//	}
+	//	if (hr == S_OK)
+	//		break;
+	//}
 
 	// TODO(andrew): what happens in the event of failure in the above loop?
-	//   Is _ptrClientOut->Initialize expected to fail?
+	//   Is _ptrCapturePlayAudioClient->Initialize expected to fail?
 	//   Same in InitRecording().
+
+	Wfx = *pWfxOut;
 	if (hr == S_OK)
 	{
 		_playAudioFrameSize = Wfx.nBlockAlign;
@@ -5311,7 +5321,8 @@ int32_t AudioDeviceWindowsCore::InitCapturePlayout()
 
 	hr = _ptrClientOut->Initialize(
 		AUDCLNT_SHAREMODE_SHARED,             // share Audio Engine with other applications
-		AUDCLNT_STREAMFLAGS_LOOPBACK,                           // processing of the audio buffer by the client will be event driven
+		AUDCLNT_STREAMFLAGS_EVENTCALLBACK |
+		AUDCLNT_STREAMFLAGS_LOOPBACK,    // processing of the audio buffer by the client will be event driven
 		hnsBufferDuration,                    // requested buffer capacity as a time value (in 100-nanosecond units)
 		0,                                    // periodicity
 		&Wfx,                                 // selected wave format
@@ -5332,11 +5343,27 @@ int32_t AudioDeviceWindowsCore::InitCapturePlayout()
 	}
 	EXIT_ON_ERROR(hr);
 
+	/*if (InitRenderForCapturePlay())
+	{
+	WEBRTC_TRACE(kTraceError, kTraceAudioDevice, _id, "Init render for capture play failed");
+	return -1;
+	}*/
+
 	if (_ptrAudioBuffer)
 	{
 		// Update the audio buffer with the selected parameters
-		_ptrAudioBuffer->SetPlayoutSampleRate(_playSampleRate);
-		_ptrAudioBuffer->SetPlayoutChannels((uint8_t)_playChannels);
+		/*_ptrAudioBuffer->SetPlayoutSampleRate(_playSampleRate);
+		_ptrAudioBuffer->SetPlayoutChannels((uint8_t)_playChannels);*/
+		DWORD layout = 0;
+		if (Wfx.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+		{
+			WAVEFORMATEXTENSIBLE* ext = (WAVEFORMATEXTENSIBLE*)&Wfx;
+			layout = ext->dwChannelMask;
+		}
+		CHANNEL_LAYOUT chl_layout = ChanneConvertChannelLayout(layout, Wfx.nChannels);
+		_ptrAudioBuffer->SetCapturePlayChlLayout(chl_layout);
+		_ptrAudioBuffer->SetCapturePlayAudioFormat(AUDIO_FORMAT_FLOAT);
+		_ptrAudioBuffer->SetCapturePlaySampleRate(Wfx.nSamplesPerSec);
 	}
 	else
 	{
@@ -5357,20 +5384,14 @@ int32_t AudioDeviceWindowsCore::InitCapturePlayout()
 			bufferFrameCount, bufferFrameCount*_playAudioFrameSize);
 	}
 
+	hr = _ptrClientOut->SetEventHandle(_hCapturePlaySamplesReadyEvent);
+	EXIT_ON_ERROR(hr);
+
 	SAFE_RELEASE(_ptrCapturePlayClient);
 	hr = _ptrClientOut->GetService(
 		__uuidof(IAudioCaptureClient),
 		(void**)&_ptrCapturePlayClient);
 	EXIT_ON_ERROR(hr);
-
-	REFERENCE_TIME hnsDefaultDevicePeriod;
-	_ptrClientOut->GetDevicePeriod(&hnsDefaultDevicePeriod, NULL);
-	LARGE_INTEGER liFirstFire;
-	liFirstFire.QuadPart = -hnsDefaultDevicePeriod / 2; // negative means relative time
-	LONG lTimeBetweenFires = (LONG)hnsDefaultDevicePeriod / 2 / (10 * 1000); // convert to milliseconds
-
-	_hCapturePlayTimer = CreateWaitableTimer(NULL, FALSE, NULL);
-	SetWaitableTimer(_hCapturePlayTimer, &liFirstFire, lTimeBetweenFires, NULL, NULL, FALSE);
 
 	// Mark playout side as initialized
 	_capturePlayIsInitialized = true;
@@ -5389,6 +5410,63 @@ Exit:
 	SAFE_RELEASE(_ptrCapturePlayClient);
 	return -1;
 }
+
+
+int32_t AudioDeviceWindowsCore::InitRenderForCapturePlay()
+{
+	HRESULT hr;
+	WAVEFORMATEX* pWfex;
+	uint32_t frames;
+	IAudioClient* pAudioClient = NULL;
+	IAudioRenderClient* pRenderClient = NULL;
+	BYTE* pBuffer;
+
+	// Create COM object with IAudioClient interface.
+	hr = _ptrDeviceOut->Activate(
+		__uuidof(IAudioClient),
+		CLSCTX_ALL,
+		NULL,
+		(void**)&pAudioClient);
+	EXIT_ON_ERROR(hr);
+
+	hr = pAudioClient->GetMixFormat(&pWfex);
+	EXIT_ON_ERROR(hr);
+
+	hr = pAudioClient->Initialize(
+		AUDCLNT_SHAREMODE_SHARED, 0, 0, 0, pWfex, nullptr);
+	EXIT_ON_ERROR(hr);
+
+	/* Silent loopback fix. Prevents audio stream from stopping and */
+	/* messing up timestamps and other weird glitches during silence */
+	/* by playing a silent sample all over again. */
+
+	hr = pAudioClient->GetBufferSize(&frames);
+	EXIT_ON_ERROR(hr);
+
+	hr = pAudioClient->GetService(__uuidof(IAudioRenderClient),
+		(void**)&pRenderClient);
+	EXIT_ON_ERROR(hr);
+
+	hr = pRenderClient->GetBuffer(frames, &pBuffer);
+	EXIT_ON_ERROR(hr);
+
+	memset(pBuffer, 0, frames*pWfex->nBlockAlign);
+
+	pRenderClient->ReleaseBuffer(frames, 0);
+		
+	pRenderClient->Release();
+	pAudioClient->Release();
+	CoTaskMemFree(pWfex);
+
+	return 0;
+
+Exit:
+	_TraceCOMError(hr);
+	SAFE_RELEASE(pRenderClient);
+	SAFE_RELEASE(pAudioClient);
+	return -1;
+}
+
 
 /*added by wrb, for capturing playout*/
 int32_t AudioDeviceWindowsCore::StartCapturePlayout()
@@ -5461,7 +5539,7 @@ int32_t AudioDeviceWindowsCore::StopCapturePlayout()
 			WEBRTC_TRACE(kTraceInfo, kTraceAudioDevice, _id,
 				"no capturing playout stream is active => close down WASAPI only");
 			SAFE_RELEASE(_ptrClientOut);
-			SAFE_RELEASE(_ptrRenderClient);
+			SAFE_RELEASE(_ptrCapturePlayClient);
 			_capturePlayIsInitialized = false;
 			_capturingPlay = false;
 			return 0;
@@ -5496,13 +5574,6 @@ int32_t AudioDeviceWindowsCore::StopCapturePlayout()
 		// this event might be caught by the new render thread within same VoE instance.
 		ResetEvent(_hShutdownCapturePlayEvent);
 
-		if (_hCapturePlayTimer != NULL)
-		{
-			CancelWaitableTimer(_hCapturePlayTimer);
-			CloseHandle(_hCapturePlayTimer);
-			_hCapturePlayTimer = NULL;
-		}
-
 		SAFE_RELEASE(_ptrClientOut);
 		SAFE_RELEASE(_ptrCapturePlayClient);
 
@@ -5532,7 +5603,7 @@ DWORD WINAPI AudioDeviceWindowsCore::WSAPICapturePlayThread(LPVOID context)
 DWORD AudioDeviceWindowsCore::DoCapturePlayThread()
 {
 	bool keepCapturePlay = true;
-	HANDLE waitArray[2] = { _hShutdownCapturePlayEvent, _hCapturePlayTimer };
+	HANDLE waitArray[2] = { _hShutdownCapturePlayEvent, _hCapturePlaySamplesReadyEvent };
 	HRESULT hr = S_OK;
 	HANDLE hMmTask = NULL;
 
@@ -5589,7 +5660,7 @@ DWORD AudioDeviceWindowsCore::DoCapturePlayThread()
 	while (keepCapturePlay)
 	{
 		// Wait for a render notification event or a shutdown event
-		DWORD waitResult = WaitForMultipleObjects(2, waitArray, FALSE, 500);
+		DWORD waitResult = WaitForMultipleObjects(2, waitArray, FALSE, 10);
 		switch (waitResult)
 		{
 		case WAIT_OBJECT_0 + 0:     // _hShutdownRenderEvent
@@ -5598,8 +5669,8 @@ DWORD AudioDeviceWindowsCore::DoCapturePlayThread()
 		case WAIT_OBJECT_0 + 1:     // _hRenderSamplesReadyEvent
 			break;
 		case WAIT_TIMEOUT:          // timeout notification
-			WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id, "render event timed out after 0.5 seconds");
-			keepCapturePlay = false;
+			/*WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id, "render event timed out after 0.5 seconds");
+			keepCapturePlay = false;*/
 			break;
 		default:                    // unexpected error
 			WEBRTC_TRACE(kTraceWarning, kTraceAudioDevice, _id, "unknown wait termination on capture play side");
@@ -5627,6 +5698,11 @@ DWORD AudioDeviceWindowsCore::DoCapturePlayThread()
 		if (FAILED(hr))
 			break;
 
+		if (dwFlags & AUDCLNT_BUFFERFLAGS_SILENT)
+		{
+			pData = NULL;
+		}
+
 		if (0 != nNumFramesToRead)
 		{
 			if (_ptrAudioBuffer)
@@ -5653,6 +5729,25 @@ DWORD AudioDeviceWindowsCore::DoCapturePlayThread()
 	}
 
 	return (DWORD)hr;
+}
+
+#define KSAUDIO_SPEAKER_4POINT1 (KSAUDIO_SPEAKER_QUAD|SPEAKER_LOW_FREQUENCY)
+#define KSAUDIO_SPEAKER_2POINT1 (KSAUDIO_SPEAKER_STEREO|SPEAKER_LOW_FREQUENCY)
+
+CHANNEL_LAYOUT AudioDeviceWindowsCore::ChanneConvertChannelLayout(DWORD layout, WORD channels)
+{
+	switch (layout) {
+	case KSAUDIO_SPEAKER_QUAD:             return SPEAKERS_QUAD;
+	case KSAUDIO_SPEAKER_2POINT1:          return SPEAKERS_2POINT1;
+	case KSAUDIO_SPEAKER_4POINT1:          return SPEAKERS_4POINT1;
+	case KSAUDIO_SPEAKER_SURROUND:         return SPEAKERS_SURROUND;
+	case KSAUDIO_SPEAKER_5POINT1:          return SPEAKERS_5POINT1;
+	case KSAUDIO_SPEAKER_5POINT1_SURROUND: return SPEAKERS_5POINT1_SURROUND;
+	case KSAUDIO_SPEAKER_7POINT1:          return SPEAKERS_7POINT1;
+	case KSAUDIO_SPEAKER_7POINT1_SURROUND: return SPEAKERS_7POINT1_SURROUND;
+	}
+
+	return (CHANNEL_LAYOUT)channels;
 }
 
 }  // namespace webrtc

@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "MediaFileRecorder.h"
+#include "CMediaFileRecorder.h"
 #include <windows.h>
 #include <timeapi.h>
 
@@ -23,7 +23,7 @@ CMediaFileRecorder::CMediaFileRecorder()
 	m_nCurrAudioPts(0),
 	m_nVideoFrameIndex(0),
 	m_nAudioFrameIndex(0),
-	m_pConvertCtx(NULL),
+	m_pVideoConvertCtx(NULL),
 	m_nStartTime(0),
 	m_nDuration(0),
 	m_pAudioConvertCtx(NULL),
@@ -120,6 +120,7 @@ bool CMediaFileRecorder::InitVideoRecord()
 	m_pVideoCodecCtx->gop_size = m_stRecordInfo.video_info.frame_rate * 10;
 	m_pVideoCodecCtx->max_b_frames = 0;
 	m_pVideoCodecCtx->delay = 0;
+	m_pVideoCodecCtx->thread_count = 10;
 	//m_pVideoCodecCtx->gop_size = 10;
 	//default setting?
 	//m_pVideoCodecCtx->gop_size = 250;
@@ -169,14 +170,6 @@ bool CMediaFileRecorder::InitVideoRecord()
 
 	InitializeCriticalSection(&m_VideoSection);
 
-	m_pConvertCtx = sws_getContext(m_stRecordInfo.video_info.src_width,
-		m_stRecordInfo.video_info.src_height,
-		m_stRecordInfo.video_info.src_pix_fmt,
-		m_stRecordInfo.video_info.dst_width,
-		m_stRecordInfo.video_info.dst_height,
-		AV_PIX_FMT_YUV420P,
-		SWS_BICUBIC, NULL, NULL, NULL);
-
 	m_nWriteFrame = 0;
 	m_nDiscardFrame = 0;
 
@@ -198,6 +191,9 @@ void CMediaFileRecorder::UnInitVideoRecord()
 	m_pInPicBuffer = NULL;
 	av_fifo_free(m_pVideoFifoBuffer);
 	m_pVideoFifoBuffer = NULL;
+	sws_freeContext(m_pVideoConvertCtx);
+	m_pVideoConvertCtx = NULL;
+
 	m_nPicSize = 0;
 	m_nVideoFrameIndex = 0;
 
@@ -336,24 +332,43 @@ void CMediaFileRecorder::Stop()
 	}
 }
 
-void CMediaFileRecorder::FillVideo(void* data)
+void CMediaFileRecorder::FillVideo(const void* data, int width, int height, AVPixelFormat pix_fmt)
 {
+
+
 	if (m_bInited && m_bRun)
 	{
 		int64_t begin_time = timeGetTime();
 
+		int dst_width = m_stRecordInfo.video_info.dst_width;
+		int dst_height = m_stRecordInfo.video_info.dst_height;
+		AVPixelFormat dst_pix_fmt = AV_PIX_FMT_YUV420P;
+
 		if (av_fifo_space(m_pVideoFifoBuffer) >= m_nPicSize + sizeof(int64_t))
 		{
-			int64_t nVideoCaptureTime;
+			if (!m_pVideoConvertCtx)
+			{
+				m_pVideoConvertCtx = sws_getContext(width,
+					height, pix_fmt,
+					dst_width, dst_height,
+					dst_pix_fmt,
+					NULL, NULL,
+					NULL, NULL);
+			}
+			int bytes_per_pix;
+			if (pix_fmt == AV_PIX_FMT_ARGB | pix_fmt == AV_PIX_FMT_RGBA)
+				bytes_per_pix = 4;
+			else if (pix_fmt == AV_PIX_FMT_RGB24 | pix_fmt == AV_PIX_FMT_BGR24)
+				bytes_per_pix = 3;
 
-			nVideoCaptureTime = m_nDuration + (timeGetTime() - m_nStartTime);
-			
-			uint8_t* src_rgb[3] = { (uint8_t*)data, NULL, NULL};
-			int src_rgb_stride[3] = { 3 * m_stRecordInfo.video_info.src_width,0, 0};
-			sws_scale(m_pConvertCtx, src_rgb, src_rgb_stride, 0, m_stRecordInfo.video_info.src_height,
+			uint8_t* srcSlice[3] = {(uint8_t*)data, NULL, NULL};
+			int srcStride[3] = { bytes_per_pix * width, 0, 0 };
+			sws_scale(m_pVideoConvertCtx, srcSlice, srcStride, 0, height,
 				m_pInVideoFrame->data, m_pInVideoFrame->linesize);
-
-			int size = m_stRecordInfo.video_info.dst_width * m_stRecordInfo.video_info.dst_height;
+			
+			int64_t nVideoCaptureTime;
+			nVideoCaptureTime = m_nDuration + (timeGetTime() - m_nStartTime);
+			int size = dst_width * dst_height;
 			EnterCriticalSection(&m_VideoSection);
 			av_fifo_generic_write(m_pVideoFifoBuffer, &nVideoCaptureTime, sizeof(int64_t), NULL);
 			av_fifo_generic_write(m_pVideoFifoBuffer, m_pInVideoFrame->data[0], size, NULL);
@@ -594,7 +609,7 @@ void CMediaFileRecorder::VideoWriteFileThreadProc()
 	// Write the left data to file
 	while (av_fifo_size(m_pVideoFifoBuffer) >= m_nPicSize + sizeof(int64_t))
 	{
-		OutputDebugStringA("Write the left video data to file");
+		OutputDebugStringA("Write the left video data to file \n");
 		EncodeAndWriteVideo();
 	}
 }
@@ -684,7 +699,7 @@ void CMediaFileRecorder::EncodeAndWriteAudio()
 		}
 		if (got_picture)
 		{
-			int64_t pts = (timeGetTime() - m_nStartTime) * m_pAudioCodecCtx->sample_rate / 1000;
+			int64_t pts = (m_nDuration + (timeGetTime() - m_nStartTime)) * m_pAudioCodecCtx->sample_rate / 1000;
 			m_AudioPacket.stream_index = 1;
 			m_AudioPacket.pts = pts/*m_nAudioFrameIndex * m_pAudioCodecCtx->frame_size*/;
 			m_AudioPacket.dts = pts/*m_nAudioFrameIndex * m_pAudioCodecCtx->frame_size*/;

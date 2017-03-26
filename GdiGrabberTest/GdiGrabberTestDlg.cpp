@@ -7,7 +7,8 @@
 #include "GdiGrabberTestDlg.h"
 #include "afxdialogex.h"
 #include <timeapi.h>
-
+#include "CScreenGdiGrabber.h"
+#include "CScreenDXGrabber.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -118,7 +119,8 @@ BOOL CGdiGrabberTestDlg::OnInitDialog()
 	// TODO:  在此添加额外的初始化代码
 	
 	
-	gdi_grabber_.reset(new CScreenGdiGrabber());
+	screen_grabber_.reset(new ScreenGrabber::CScreenGdiGrabber());
+	//screen_grabber_.reset(new ScreenGrabber::CScreenDXGrabber());
 
 	media_file_recorder_.reset(new CMediaFileRecorder());
 	
@@ -191,22 +193,20 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 	if (!record_started_)
 	{
 		RECT grab_rect = { CAPTURE_LEFT, CAPTURE_TOP, CAPTURE_WIDTH, CAPTURE_HEIGHT };
-		gdi_grabber_->SetGrabFrameRate(CAPTURE_FRAME_RATE);
-		gdi_grabber_->SetGrabRect(grab_rect);
-		gdi_grabber_->RegisterDataCb(this);
-		gdi_grabber_->RegisterDataCb(&m_StaticPic);
+		screen_grabber_->SetGrabFrameRate(CAPTURE_FRAME_RATE);
+		screen_grabber_->SetGrabRect(CAPTURE_LEFT, CAPTURE_TOP, CAPTURE_LEFT + CAPTURE_WIDTH,
+			CAPTURE_TOP + CAPTURE_HEIGHT);
+		screen_grabber_->RegisterDataCb(this);
+		screen_grabber_->RegisterDataCb(&m_StaticPic);
 
 		CMediaFileRecorder::RecordInfo record_info;
 		strcpy(record_info.file_name, "test.mp4");
-		record_info.video_info.src_width = CAPTURE_WIDTH;
-		record_info.video_info.src_height = CAPTURE_HEIGHT;
 		record_info.video_info.dst_width = CAPTURE_WIDTH;
 		record_info.video_info.dst_height = CAPTURE_HEIGHT;
 		record_info.video_info.frame_rate = CAPTURE_FRAME_RATE;
-		record_info.video_info.src_pix_fmt = AV_PIX_FMT_BGR24;
 		media_file_recorder_->Init(record_info);
 
-		gdi_grabber_->StartGrab();
+		screen_grabber_->StartGrab();
 
 		int32_t ret;
 		//ret = audio_dev_module_->InitRecording();
@@ -224,15 +224,15 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 	else
 	{
 		record_started_ = false;
-		gdi_grabber_->StopGrab();
+		screen_grabber_->StopGrab();
 		//audio_dev_module_->StopRecording();
 		audio_dev_module_->StopCapturePlayout();
 		media_file_recorder_->Stop();
 		media_file_recorder_->UnInit();
 		m_ButtonStart.SetWindowTextW(L"开始");
 
-		gdi_grabber_->UnRegisterDataCb(this);
-		gdi_grabber_->UnRegisterDataCb(&m_StaticPic);
+		screen_grabber_->UnRegisterDataCb(this);
+		screen_grabber_->UnRegisterDataCb(&m_StaticPic);
 
 		if (!record_interrupt_)
 			duration_ += timeGetTime() - start_capture_time_;
@@ -253,11 +253,35 @@ void CGdiGrabberTestDlg::OnClose()
 	CDialogEx::OnClose();
 }
 
-void CGdiGrabberTestDlg::OnScreenData(void* data, int width, int height)
+AVPixelFormat ConvertToAVPixelFormat(ScreenGrabber::PIX_FMT pix_fmt)
+{
+	AVPixelFormat target_fmt = AV_PIX_FMT_NONE;
+	switch (pix_fmt)
+	{
+	case ScreenGrabber::PIX_FMT::PIX_FMT_ARGB:
+		target_fmt = AV_PIX_FMT_ARGB;
+		break;
+	case ScreenGrabber::PIX_FMT::PIX_FMT_BGRA:
+		target_fmt = AV_PIX_FMT_BGRA;
+		break;
+	case ScreenGrabber::PIX_FMT::PIX_FMT_BGR24:
+		target_fmt = AV_PIX_FMT_BGR24;
+		break;
+	case ScreenGrabber::PIX_FMT::PIX_FMT_RGB24:
+		target_fmt = AV_PIX_FMT_RGB24;
+		break;
+	default:
+		break;
+	}
+
+	return target_fmt;
+}
+
+void CGdiGrabberTestDlg::OnScreenData(void* data, int width, int height, ScreenGrabber::PIX_FMT pix_fmt)
 {
 	if (media_file_recorder_)
 	{
-		media_file_recorder_->FillVideo(data);
+		media_file_recorder_->FillVideo(data, width, height, ConvertToAVPixelFormat(pix_fmt));
 	}
 }
 
@@ -269,7 +293,7 @@ void CGdiGrabberTestDlg::OnBnClickedButtonInterrupt()
 	{
 		if (!record_interrupt_)
 		{
-			gdi_grabber_->StopGrab();
+			screen_grabber_->StopGrab();
 			audio_dev_module_->StopRecording();
 			media_file_recorder_->Stop();
 			record_interrupt_ = true;
@@ -282,7 +306,7 @@ void CGdiGrabberTestDlg::OnBnClickedButtonInterrupt()
 		}
 		else
 		{
-			gdi_grabber_->StartGrab();
+			screen_grabber_->StartGrab();
 			audio_dev_module_->InitRecording();
 			audio_dev_module_->StartRecording();
 			media_file_recorder_->Start();

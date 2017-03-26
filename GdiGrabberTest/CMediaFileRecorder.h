@@ -39,13 +39,10 @@ public:
 		char file_name[1024];
 		struct Video
 		{
-			int src_width;
-			int src_height;
 			int dst_width;
 			int dst_height;
 			int frame_rate;
 			int bit_rate;
-			AVPixelFormat src_pix_fmt;
 		}video_info;
 
 		struct Audio
@@ -55,13 +52,10 @@ public:
 		RecordInfo()
 		{
 			memset(file_name, 0, 1024);
-			video_info.src_width = 0;
-			video_info.src_height = 0;
 			video_info.dst_width = 0;
 			video_info.dst_height = 0;
 			video_info.frame_rate = 0;
 			video_info.bit_rate = 0;
-			video_info.src_pix_fmt = AV_PIX_FMT_NONE;
 		}
 	};
 
@@ -73,7 +67,7 @@ public:
 	void UnInit();
 	bool Start();
 	void Stop();
-	void FillVideo(void* data);
+	void FillVideo(const void* data, int width, int height, AVPixelFormat);
 	void FillAudio(const void* audioSamples, 
 		int nb_samples, int sample_rate, 
 		int64_t chl_layout, AVSampleFormat sample_fmt);
@@ -114,7 +108,7 @@ private:
 	uint8_t* m_pInPicBuffer;
 	AVFrame* m_pAudioFrame;
 
-	SwsContext* m_pConvertCtx;
+	SwsContext* m_pVideoConvertCtx;
 	SwrContext* m_pAudioConvertCtx;
 
 	uint8_t* m_pAudioBuffer;

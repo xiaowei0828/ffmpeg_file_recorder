@@ -33,16 +33,22 @@
     <ClInclude Include="Resource.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ScreenGdiGrabber.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="dib.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="VideoStatic.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="MediaFileRecorder.h">
+    <ClInclude Include="CScreenDXGrabber.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CScreenGdiGrabber.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CMediaFileRecorder.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="IScreenGrabber.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -56,9 +62,6 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ScreenGdiGrabber.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="dib.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -68,7 +71,16 @@
     <ClCompile Include="ScreenAndAudioCapture.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="MediaFileRecorder.cpp">
+    <ClCompile Include="audio_mixer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CScreenDXGrabber.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CScreenGdiGrabber.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CMediaFileRecorder.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
