@@ -1,15 +1,9 @@
 #ifndef ISCREENGRABBER_H
 #define ISCREENGRABBER_H
 
-namespace ScreenGrabber {
+#include "MediaRecordTypeDef.h"
 
-	enum PIX_FMT
-	{
-		PIX_FMT_RGB24,
-		PIX_FMT_BGR24,
-		PIX_FMT_ARGB,
-		PIX_FMT_BGRA,
-	};
+namespace MediaFileRecorder {
 
 	class IScreenGrabberDataCb
 	{
@@ -35,5 +29,6 @@ namespace ScreenGrabber {
 	protected:
 		virtual ~IScreenGrabber(){}
 	};
+
 }
 #endif

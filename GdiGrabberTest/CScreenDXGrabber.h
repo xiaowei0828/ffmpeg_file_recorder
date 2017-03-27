@@ -8,7 +8,7 @@
 #include <thread>
 #include <d3d9.h>
 
-namespace ScreenGrabber
+namespace MediaFileRecorder
 {
 	class CScreenDXGrabber : public IScreenGrabber
 	{

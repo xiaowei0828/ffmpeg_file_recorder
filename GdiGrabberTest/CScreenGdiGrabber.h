@@ -7,7 +7,7 @@
 #include <atomic>
 #include <thread>
 
-namespace ScreenGrabber
+namespace MediaFileRecorder
 {
 	class CScreenGdiGrabber : public IScreenGrabber
 	{

@@ -2,7 +2,7 @@
 #include "CScreenGdiGrabber.h"
 #include <MMSystem.h>
 
-namespace ScreenGrabber {
+namespace MediaFileRecorder {
 
 	CScreenGdiGrabber::CScreenGdiGrabber()
 	{
@@ -154,7 +154,7 @@ namespace ScreenGrabber {
 
 			for (IScreenGrabberDataCb* cb : vec_data_cb_)
 			{
-				cb->OnScreenData(bmp_buffer_, width, heigth, ScreenGrabber::PIX_FMT::PIX_FMT_BGR24);
+				cb->OnScreenData(bmp_buffer_, width, heigth, PIX_FMT::PIX_FMT_BGR24);
 			}
 		}
 	}

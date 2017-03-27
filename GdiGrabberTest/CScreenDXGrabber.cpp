@@ -3,7 +3,7 @@
 #include "CScreenDXGrabber.h"
 #include <MMSystem.h>
 
-namespace ScreenGrabber
+namespace MediaFileRecorder
 {
 	CScreenDXGrabber::CScreenDXGrabber()
 	{
@@ -174,7 +174,7 @@ namespace ScreenGrabber
 			for (IScreenGrabberDataCb* cb : vec_data_cb_)
 			{
 				cb->OnScreenData(lockedRect.pBits, grab_rect_.right - grab_rect_.left, 
-					grab_rect_.bottom - grab_rect_.top, ScreenGrabber::PIX_FMT::PIX_FMT_BGRA);
+					grab_rect_.bottom - grab_rect_.top, PIX_FMT::PIX_FMT_BGRA);
 			}
 			d3d_surface_ptr_->UnlockRect();
 

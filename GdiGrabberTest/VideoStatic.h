@@ -2,9 +2,9 @@
 // CPenViewStatic
 #include <afxwin.h>
 #include "dib.h"
-#include "CScreenGdiGrabber.h"
+#include "IScreenGrabber.h"
 
-class CVideoStatic : public CStatic, public ScreenGrabber::IScreenGrabberDataCb
+class CVideoStatic : public CStatic, public MediaFileRecorder::IScreenGrabberDataCb
 {
 	DECLARE_DYNAMIC(CVideoStatic)
 
@@ -12,7 +12,7 @@ public:
 	CVideoStatic();
 	virtual ~CVideoStatic();
 	// VideoDevice::IVideoFilter
-	void OnScreenData(void* data, int width, int height, ScreenGrabber::PIX_FMT pix_fmt) override;
+	void OnScreenData(void* data, int width, int height, MediaFileRecorder::PIX_FMT pix_fmt) override;
 
 	DECLARE_MESSAGE_MAP()
 

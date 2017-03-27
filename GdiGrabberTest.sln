@@ -1,21 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GdiGrabberTest", "GdiGrabberTest\GdiGrabberTest.vcxproj", "{C258013A-FC5D-4CD4-8E11-4EF55D4DE6A6}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "webrtc_audio_device", "webrtc_audio_device", "{43F4CEB3-E01F-4C25-99C5-C7E1949D924A}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "system_wrappers", "GdiGrabberTest\webrtc\system_wrappers\system_wrappers.vcxproj", "{16FE3FD5-AA01-BD2A-2BFF-7785FFEDEDEC}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "common_audio", "GdiGrabberTest\webrtc\common_audio\common_audio.vcxproj", "{39FE2BB0-C2E7-DB9C-D514-19B221F3CA00}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rtc_base_approved", "GdiGrabberTest\webrtc\base\rtc_base_approved.vcxproj", "{510DEDDC-ED2F-0A3B-ABE1-F7F1E6D75CF8}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "audio_device", "GdiGrabberTest\webrtc\modules\audio_device.vcxproj", "{E7E494C8-F0D0-4376-4006-C691BB4233EF}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "webrtc_common", "GdiGrabberTest\webrtc\webrtc_common.vcxproj", "{4E00D9E2-1F74-8D2E-1878-DCFE215138F5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,58 +19,8 @@ Global
 		{C258013A-FC5D-4CD4-8E11-4EF55D4DE6A6}.Release|Win32.ActiveCfg = Release|Win32
 		{C258013A-FC5D-4CD4-8E11-4EF55D4DE6A6}.Release|Win32.Build.0 = Release|Win32
 		{C258013A-FC5D-4CD4-8E11-4EF55D4DE6A6}.Release|x64.ActiveCfg = Release|Win32
-		{16FE3FD5-AA01-BD2A-2BFF-7785FFEDEDEC}.Debug|Win32.ActiveCfg = Debug|Win32
-		{16FE3FD5-AA01-BD2A-2BFF-7785FFEDEDEC}.Debug|Win32.Build.0 = Debug|Win32
-		{16FE3FD5-AA01-BD2A-2BFF-7785FFEDEDEC}.Debug|x64.ActiveCfg = Debug|x64
-		{16FE3FD5-AA01-BD2A-2BFF-7785FFEDEDEC}.Debug|x64.Build.0 = Debug|x64
-		{16FE3FD5-AA01-BD2A-2BFF-7785FFEDEDEC}.Release|Win32.ActiveCfg = Release|Win32
-		{16FE3FD5-AA01-BD2A-2BFF-7785FFEDEDEC}.Release|Win32.Build.0 = Release|Win32
-		{16FE3FD5-AA01-BD2A-2BFF-7785FFEDEDEC}.Release|x64.ActiveCfg = Release|x64
-		{16FE3FD5-AA01-BD2A-2BFF-7785FFEDEDEC}.Release|x64.Build.0 = Release|x64
-		{39FE2BB0-C2E7-DB9C-D514-19B221F3CA00}.Debug|Win32.ActiveCfg = Debug|Win32
-		{39FE2BB0-C2E7-DB9C-D514-19B221F3CA00}.Debug|Win32.Build.0 = Debug|Win32
-		{39FE2BB0-C2E7-DB9C-D514-19B221F3CA00}.Debug|x64.ActiveCfg = Debug|x64
-		{39FE2BB0-C2E7-DB9C-D514-19B221F3CA00}.Debug|x64.Build.0 = Debug|x64
-		{39FE2BB0-C2E7-DB9C-D514-19B221F3CA00}.Release|Win32.ActiveCfg = Release|Win32
-		{39FE2BB0-C2E7-DB9C-D514-19B221F3CA00}.Release|Win32.Build.0 = Release|Win32
-		{39FE2BB0-C2E7-DB9C-D514-19B221F3CA00}.Release|x64.ActiveCfg = Release|x64
-		{39FE2BB0-C2E7-DB9C-D514-19B221F3CA00}.Release|x64.Build.0 = Release|x64
-		{510DEDDC-ED2F-0A3B-ABE1-F7F1E6D75CF8}.Debug|Win32.ActiveCfg = Debug|Win32
-		{510DEDDC-ED2F-0A3B-ABE1-F7F1E6D75CF8}.Debug|Win32.Build.0 = Debug|Win32
-		{510DEDDC-ED2F-0A3B-ABE1-F7F1E6D75CF8}.Debug|x64.ActiveCfg = Debug|x64
-		{510DEDDC-ED2F-0A3B-ABE1-F7F1E6D75CF8}.Debug|x64.Build.0 = Debug|x64
-		{510DEDDC-ED2F-0A3B-ABE1-F7F1E6D75CF8}.Release|Win32.ActiveCfg = Release|Win32
-		{510DEDDC-ED2F-0A3B-ABE1-F7F1E6D75CF8}.Release|Win32.Build.0 = Release|Win32
-		{510DEDDC-ED2F-0A3B-ABE1-F7F1E6D75CF8}.Release|x64.ActiveCfg = Release|x64
-		{510DEDDC-ED2F-0A3B-ABE1-F7F1E6D75CF8}.Release|x64.Build.0 = Release|x64
-		{E7E494C8-F0D0-4376-4006-C691BB4233EF}.Debug|Win32.ActiveCfg = Debug|Win32
-		{E7E494C8-F0D0-4376-4006-C691BB4233EF}.Debug|Win32.Build.0 = Debug|Win32
-		{E7E494C8-F0D0-4376-4006-C691BB4233EF}.Debug|x64.ActiveCfg = Debug|x64
-		{E7E494C8-F0D0-4376-4006-C691BB4233EF}.Debug|x64.Build.0 = Debug|x64
-		{E7E494C8-F0D0-4376-4006-C691BB4233EF}.Release|Win32.ActiveCfg = Release|Win32
-		{E7E494C8-F0D0-4376-4006-C691BB4233EF}.Release|Win32.Build.0 = Release|Win32
-		{E7E494C8-F0D0-4376-4006-C691BB4233EF}.Release|x64.ActiveCfg = Release|x64
-		{E7E494C8-F0D0-4376-4006-C691BB4233EF}.Release|x64.Build.0 = Release|x64
-		{4E00D9E2-1F74-8D2E-1878-DCFE215138F5}.Debug|Win32.ActiveCfg = Debug|Win32
-		{4E00D9E2-1F74-8D2E-1878-DCFE215138F5}.Debug|Win32.Build.0 = Debug|Win32
-		{4E00D9E2-1F74-8D2E-1878-DCFE215138F5}.Debug|x64.ActiveCfg = Debug|x64
-		{4E00D9E2-1F74-8D2E-1878-DCFE215138F5}.Debug|x64.Build.0 = Debug|x64
-		{4E00D9E2-1F74-8D2E-1878-DCFE215138F5}.Release|Win32.ActiveCfg = Release|Win32
-		{4E00D9E2-1F74-8D2E-1878-DCFE215138F5}.Release|Win32.Build.0 = Release|Win32
-		{4E00D9E2-1F74-8D2E-1878-DCFE215138F5}.Release|x64.ActiveCfg = Release|x64
-		{4E00D9E2-1F74-8D2E-1878-DCFE215138F5}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{16FE3FD5-AA01-BD2A-2BFF-7785FFEDEDEC} = {43F4CEB3-E01F-4C25-99C5-C7E1949D924A}
-		{39FE2BB0-C2E7-DB9C-D514-19B221F3CA00} = {43F4CEB3-E01F-4C25-99C5-C7E1949D924A}
-		{510DEDDC-ED2F-0A3B-ABE1-F7F1E6D75CF8} = {43F4CEB3-E01F-4C25-99C5-C7E1949D924A}
-		{E7E494C8-F0D0-4376-4006-C691BB4233EF} = {43F4CEB3-E01F-4C25-99C5-C7E1949D924A}
-		{4E00D9E2-1F74-8D2E-1878-DCFE215138F5} = {43F4CEB3-E01F-4C25-99C5-C7E1949D924A}
-	EndGlobalSection
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal

@@ -9,6 +9,7 @@
 #include <timeapi.h>
 #include "CScreenGdiGrabber.h"
 #include "CScreenDXGrabber.h"
+#include "CWASAudioCapture.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -55,10 +56,6 @@ CGdiGrabberTestDlg::CGdiGrabberTestDlg(CWnd* pParent /*=NULL*/)
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	record_started_ = false;
 	record_interrupt_ = false;
-
-	webrtc::Trace::CreateTrace();
-	webrtc::Trace::set_level_filter(webrtc::kTraceWarning | webrtc::kTraceError | webrtc::kTraceCritical);
-	webrtc::Trace::SetTraceCallback(this);
 }
 
 void CGdiGrabberTestDlg::DoDataExchange(CDataExchange* pDX)
@@ -66,7 +63,6 @@ void CGdiGrabberTestDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_STATIC_PIC, m_StaticPic);
 	DDX_Control(pDX, IDC_BUTTON_START, m_ButtonStart);
-	webrtc::Trace::ReturnTrace();
 }
 
 BEGIN_MESSAGE_MAP(CGdiGrabberTestDlg, CDialogEx)
@@ -119,18 +115,12 @@ BOOL CGdiGrabberTestDlg::OnInitDialog()
 	// TODO:  在此添加额外的初始化代码
 	
 	
-	screen_grabber_.reset(new ScreenGrabber::CScreenGdiGrabber());
+	screen_grabber_.reset(new MediaFileRecorder::CScreenGdiGrabber());
 	//screen_grabber_.reset(new ScreenGrabber::CScreenDXGrabber());
+	audio_capture_.reset(new MediaFileRecorder::CWASAudioCapture());
+	audio_capture_->RegisterCaptureDataCb(this);
 
-	media_file_recorder_.reset(new CMediaFileRecorder());
-	
-	audio_dev_module_ = webrtc::CreateAudioDeviceModule(0, webrtc::AudioDeviceModule::AudioLayer::kPlatformDefaultAudio);
-	audio_dev_module_->AddRef();
-	audio_dev_module_->Init();
-	audio_dev_module_->RegisterAudioCallback(this);
-	audio_dev_module_->RegisterEventObserver(this);
-	audio_dev_module_->SetRecordingDevice(webrtc::AudioDeviceModule::kDefaultDevice);
-	audio_dev_module_->SetPlayoutDevice(webrtc::AudioDeviceModule::kDefaultDevice);
+	media_file_recorder_.reset(new MediaFileRecorder::CMediaFileRecorder());
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -193,27 +183,25 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 	if (!record_started_)
 	{
 		RECT grab_rect = { CAPTURE_LEFT, CAPTURE_TOP, CAPTURE_WIDTH, CAPTURE_HEIGHT };
-		screen_grabber_->SetGrabFrameRate(CAPTURE_FRAME_RATE);
-		screen_grabber_->SetGrabRect(CAPTURE_LEFT, CAPTURE_TOP, CAPTURE_LEFT + CAPTURE_WIDTH,
-			CAPTURE_TOP + CAPTURE_HEIGHT);
-		screen_grabber_->RegisterDataCb(this);
-		screen_grabber_->RegisterDataCb(&m_StaticPic);
+		
 
-		CMediaFileRecorder::RecordInfo record_info;
+		MediaFileRecorder::RecordInfo record_info;
 		strcpy(record_info.file_name, "test.mp4");
 		record_info.video_info.dst_width = CAPTURE_WIDTH;
 		record_info.video_info.dst_height = CAPTURE_HEIGHT;
 		record_info.video_info.frame_rate = CAPTURE_FRAME_RATE;
 		media_file_recorder_->Init(record_info);
 
+		screen_grabber_->SetGrabFrameRate(CAPTURE_FRAME_RATE);
+		screen_grabber_->SetGrabRect(CAPTURE_LEFT, CAPTURE_TOP, CAPTURE_LEFT + CAPTURE_WIDTH,
+			CAPTURE_TOP + CAPTURE_HEIGHT);
+		screen_grabber_->RegisterDataCb(this);
+		screen_grabber_->RegisterDataCb(&m_StaticPic);
 		screen_grabber_->StartGrab();
 
-		int32_t ret;
-		//ret = audio_dev_module_->InitRecording();
-		//ret = audio_dev_module_->StartRecording();
-		//audio_dev_module_->SetStereoPlayout(false);
-		ret = audio_dev_module_->InitCapturePlayout();
-		ret = audio_dev_module_->StartCapturePlayout();
+		int ret = audio_capture_->InitSpeaker();
+		ret = audio_capture_->GetSoundCardAudioInfo(speaker_audio_info_);
+		ret =audio_capture_->StartCaptureSoundCard();
 
 		record_started_ = true;
 		m_ButtonStart.SetWindowTextW(L"停止");
@@ -225,8 +213,8 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 	{
 		record_started_ = false;
 		screen_grabber_->StopGrab();
-		//audio_dev_module_->StopRecording();
-		audio_dev_module_->StopCapturePlayout();
+		audio_capture_->StopCaptureSoundCard();
+		audio_capture_->UnInitSpeaker();
 		media_file_recorder_->Stop();
 		media_file_recorder_->UnInit();
 		m_ButtonStart.SetWindowTextW(L"开始");
@@ -247,41 +235,15 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 
 void CGdiGrabberTestDlg::OnClose()
 {
-	// TODO:  在此添加消息处理程序代码和/或调用默认值
-	audio_dev_module_->Terminate();
-	audio_dev_module_->Release();
+	// TODO:  在此添加消息处理程序代码和/或调用默认
 	CDialogEx::OnClose();
 }
 
-AVPixelFormat ConvertToAVPixelFormat(ScreenGrabber::PIX_FMT pix_fmt)
-{
-	AVPixelFormat target_fmt = AV_PIX_FMT_NONE;
-	switch (pix_fmt)
-	{
-	case ScreenGrabber::PIX_FMT::PIX_FMT_ARGB:
-		target_fmt = AV_PIX_FMT_ARGB;
-		break;
-	case ScreenGrabber::PIX_FMT::PIX_FMT_BGRA:
-		target_fmt = AV_PIX_FMT_BGRA;
-		break;
-	case ScreenGrabber::PIX_FMT::PIX_FMT_BGR24:
-		target_fmt = AV_PIX_FMT_BGR24;
-		break;
-	case ScreenGrabber::PIX_FMT::PIX_FMT_RGB24:
-		target_fmt = AV_PIX_FMT_RGB24;
-		break;
-	default:
-		break;
-	}
-
-	return target_fmt;
-}
-
-void CGdiGrabberTestDlg::OnScreenData(void* data, int width, int height, ScreenGrabber::PIX_FMT pix_fmt)
+void CGdiGrabberTestDlg::OnScreenData(void* data, int width, int height, MediaFileRecorder::PIX_FMT pix_fmt)
 {
 	if (media_file_recorder_)
 	{
-		media_file_recorder_->FillVideo(data, width, height, ConvertToAVPixelFormat(pix_fmt));
+		media_file_recorder_->FillVideo(data, width, height, pix_fmt);
 	}
 }
 
@@ -294,7 +256,6 @@ void CGdiGrabberTestDlg::OnBnClickedButtonInterrupt()
 		if (!record_interrupt_)
 		{
 			screen_grabber_->StopGrab();
-			audio_dev_module_->StopRecording();
 			media_file_recorder_->Stop();
 			record_interrupt_ = true;
 			GetDlgItem(IDC_BUTTON_INTERRUPT)->SetWindowTextW(L"继续");
@@ -307,8 +268,6 @@ void CGdiGrabberTestDlg::OnBnClickedButtonInterrupt()
 		else
 		{
 			screen_grabber_->StartGrab();
-			audio_dev_module_->InitRecording();
-			audio_dev_module_->StartRecording();
 			media_file_recorder_->Start();
 			start_capture_time_ = timeGetTime();
 			record_interrupt_ = false;
@@ -317,69 +276,20 @@ void CGdiGrabberTestDlg::OnBnClickedButtonInterrupt()
 	}
 }
 
-int32_t CGdiGrabberTestDlg::RecordedDataIsAvailable(const void* audioSamples, const size_t nSamples, 
-	const size_t nBytesPerSample, const uint8_t nChannels, 
-	const uint32_t samplesPerSec, const uint32_t totalDelayMS, 
-	const int32_t clockDrift, const uint32_t currentMicLevel, 
-	const bool keyPressed, uint32_t& newMicLevel)
+void CGdiGrabberTestDlg::OnCapturedMicData(const void* audioSamples, int nSamples)
 {
 	if (media_file_recorder_)
 	{
-		int64_t chl_layout;
-		if (nChannels == 1)
-			chl_layout = AV_CH_LAYOUT_MONO;
-		else if (nChannels == 2)
-			chl_layout = AV_CH_LAYOUT_STEREO;
-		else
-		{
-			OutputDebugStringA("Invalid channel type");
-			return 0;
-		}
-
-		media_file_recorder_->FillAudio(audioSamples, nSamples, 
-			samplesPerSec, chl_layout, 
-			AVSampleFormat::AV_SAMPLE_FMT_S16);
+		media_file_recorder_->FillAudio(audioSamples, nSamples, mic_audio_info_.sample_rate,
+			mic_audio_info_.chl_layout, mic_audio_info_.audio_format);
 	}
-	return 0;
 }
 
-int32_t CGdiGrabberTestDlg::RecordedPlayDataIsAvailable(const void* audioSamples, const size_t nSamples, 
-	const size_t nBytesPerSample, const uint8_t nChannels, 
-	const uint32_t samplesPerSec, const uint32_t totalDelayMS, 
-	const int32_t clockDrift)
+void CGdiGrabberTestDlg::OnCapturedSoundCardData(const void* audioSamples, int nSamples)
 {
 	if (media_file_recorder_)
 	{
-		int64_t chl_layout;
-		if (nChannels == 1)
-			chl_layout = AV_CH_LAYOUT_MONO;
-		else if (nChannels == 2)
-			chl_layout = AV_CH_LAYOUT_STEREO;
-		else
-		{
-			OutputDebugStringA("Invalid channel type");
-			return 0;
-		}
-
-		media_file_recorder_->FillAudio(audioSamples, nSamples,
-			samplesPerSec, chl_layout,
-			AVSampleFormat::AV_SAMPLE_FMT_S16);
+		media_file_recorder_->FillAudio(audioSamples, nSamples, speaker_audio_info_.sample_rate,
+			speaker_audio_info_.chl_layout, speaker_audio_info_.audio_format);
 	}
-	return 0;
-}
-
-void CGdiGrabberTestDlg::OnErrorIsReported(const ErrorCode error)
-{
-	return;
-}
-
-void CGdiGrabberTestDlg::OnWarningIsReported(const WarningCode warning)
-{
-
-}
-
-void CGdiGrabberTestDlg::Print(webrtc::TraceLevel level, const char* message, int length)
-{
-	std::string log(message, length);
-	OutputDebugStringA(log.c_str());
 }
