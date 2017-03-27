@@ -91,7 +91,7 @@ int OpenVideoCapture()
 	}
 
 	img_convert_ctx = sws_getContext(pCodecCtx_Video->width, pCodecCtx_Video->height, pCodecCtx_Video->pix_fmt,
-		pCodecCtx_Video->width, pCodecCtx_Video->height, PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL);
+		pCodecCtx_Video->width, pCodecCtx_Video->height, AV_PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL);
 
 	frame_size = avpicture_get_size(pCodecCtx_Video->pix_fmt, pCodecCtx_Video->width, pCodecCtx_Video->height);
 	//ÉêÇë30Ö¡»º´æ
@@ -439,9 +439,9 @@ DWORD WINAPI ScreenCapThreadProc(LPVOID lpParam)
 	AVPacket *packet = (AVPacket *)av_malloc(sizeof(AVPacket));
 	int got_picture;
 	AVFrame	*pFrame;
-	pFrame = avcodec_alloc_frame();
+	pFrame = av_frame_alloc();
 
-	AVFrame *picture = avcodec_alloc_frame();
+	AVFrame *picture = av_frame_alloc();
 	int size = avpicture_get_size(pFormatCtx_Out->streams[VideoIndex]->codec->pix_fmt,
 		pFormatCtx_Out->streams[VideoIndex]->codec->width, pFormatCtx_Out->streams[VideoIndex]->codec->height);
 	picture_buf = new uint8_t[size];

@@ -18,6 +18,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#ifndef AVUTIL_STEREO3D_H
+#define AVUTIL_STEREO3D_H
+
 #include <stdint.h>
 
 #include "frame.h"
@@ -145,3 +148,23 @@ AVStereo3D *av_stereo3d_alloc(void);
  * @return The AVStereo3D structure to be filled by caller.
  */
 AVStereo3D *av_stereo3d_create_side_data(AVFrame *frame);
+
+/**
+ * Provide a human-readable name of a given stereo3d type.
+ *
+ * @param type The input stereo3d type value.
+ *
+ * @return The name of the stereo3d value, or "unknown".
+ */
+const char *av_stereo3d_type_name(unsigned int type);
+
+/**
+ * Get the AVStereo3DType form a human-readable name.
+ *
+ * @param type The input string.
+ *
+ * @return The AVStereo3DType value, or -1 if not found.
+ */
+int av_stereo3d_from_name(const char *name);
+
+#endif /* AVUTIL_STEREO3D_H */

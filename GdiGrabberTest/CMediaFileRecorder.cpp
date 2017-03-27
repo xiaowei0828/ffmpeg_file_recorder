@@ -119,20 +119,26 @@ namespace MediaFileRecorder
 		m_pVideoCodecCtx->pix_fmt = AV_PIX_FMT_YUV420P;
 		m_pVideoCodecCtx->width = m_stRecordInfo.video_info.dst_width;
 		m_pVideoCodecCtx->height = m_stRecordInfo.video_info.dst_height;
-		//m_pVideoCodecCtx->bit_rate = m_stRecordInfo.video_info.bit_rate;
-		m_pVideoCodecCtx->flags &= CODEC_FLAG_QSCALE;
-		/*m_pVideoCodecCtx->rc_min_rate = 128000;
-		m_pVideoCodecCtx->rc_max_rate = 8 * 50000;*/
 
 		m_pVideoCodecCtx->time_base.num = 1;
 		m_pVideoCodecCtx->time_base.den = m_stRecordInfo.video_info.frame_rate;
-		m_pVideoCodecCtx->qmin = 18;
-		m_pVideoCodecCtx->qmax = 28;
+		m_pVideoCodecCtx->thread_count = 4;
+		//m_pVideoCodecCtx->bit_rate = 1024 * 512 * 8;
 
-		m_pVideoCodecCtx->gop_size = m_stRecordInfo.video_info.frame_rate * 10;
-		m_pVideoCodecCtx->max_b_frames = 0;
-		m_pVideoCodecCtx->delay = 0;
-		m_pVideoCodecCtx->thread_count = 10;
+		m_pVideoCodecCtx->max_qdiff = 4;
+		m_pVideoCodecCtx->qmin = 10;
+		m_pVideoCodecCtx->qmax = 30;
+		m_pVideoCodecCtx->qcompress = 0.6;
+		m_pVideoCodecCtx->gop_size = m_stRecordInfo.video_info.frame_rate;
+
+		/*m_pVideoCodecCtx->me_range = 16;
+		m_pVideoCodecCtx->max_qdiff = 4;
+		m_pVideoCodecCtx->qmin = 10;
+		m_pVideoCodecCtx->qmax = 20;
+		m_pVideoCodecCtx->qcompress = 0.6;*/
+
+		//m_pVideoCodecCtx->gop_size = m_stRecordInfo.video_info.frame_rate * 10;
+		
 		//m_pVideoCodecCtx->gop_size = 10;
 		//default setting?
 		//m_pVideoCodecCtx->gop_size = 250;
@@ -144,6 +150,7 @@ namespace MediaFileRecorder
 		AVDictionary *param = 0;
 		av_dict_set(&param, "preset", "ultrafast", 0);
 		av_dict_set(&param, "tune", "zerolatency", 0);
+		/*av_dict_set(&param, "profile", "main", 0);*/
 
 		AVCodec* pEncoder = avcodec_find_encoder(m_pVideoCodecCtx->codec_id);
 		if (!pEncoder)
@@ -225,10 +232,10 @@ namespace MediaFileRecorder
 		}
 
 		m_pAudioCodecCtx = m_pAudioStream->codec;
-		m_pAudioCodecCtx->codec_id = AV_CODEC_ID_MP3;
+		m_pAudioCodecCtx->codec_id = AV_CODEC_ID_AAC;
 		m_pAudioCodecCtx->codec_type = AVMEDIA_TYPE_AUDIO;
 		m_pAudioCodecCtx->sample_fmt = AV_SAMPLE_FMT_FLTP;
-		m_pAudioCodecCtx->sample_rate = 44100;
+		m_pAudioCodecCtx->sample_rate = 48000;
 		m_pAudioCodecCtx->channel_layout = AV_CH_LAYOUT_STEREO;
 		m_pAudioCodecCtx->channels = av_get_channel_layout_nb_channels(m_pAudioCodecCtx->channel_layout);
 		//m_pAudioCodecCtx->bit_rate = 128000;
