@@ -225,9 +225,9 @@ namespace MediaFileRecorder
 		}
 
 		m_pAudioCodecCtx = m_pAudioStream->codec;
-		m_pAudioCodecCtx->codec_id = AV_CODEC_ID_AAC;
+		m_pAudioCodecCtx->codec_id = AV_CODEC_ID_MP3;
 		m_pAudioCodecCtx->codec_type = AVMEDIA_TYPE_AUDIO;
-		m_pAudioCodecCtx->sample_fmt = AV_SAMPLE_FMT_S16;
+		m_pAudioCodecCtx->sample_fmt = AV_SAMPLE_FMT_FLTP;
 		m_pAudioCodecCtx->sample_rate = 44100;
 		m_pAudioCodecCtx->channel_layout = AV_CH_LAYOUT_STEREO;
 		m_pAudioCodecCtx->channels = av_get_channel_layout_nb_channels(m_pAudioCodecCtx->channel_layout);
