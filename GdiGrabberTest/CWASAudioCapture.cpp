@@ -591,6 +591,8 @@ namespace MediaFileRecorder
 		memset(buffer, 0, frames*wfex->nBlockAlign);
 
 		pRenderClient->ReleaseBuffer(frames, 0);
+
+		return 0;
 	}
 
 }

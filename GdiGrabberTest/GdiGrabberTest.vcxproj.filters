@@ -80,12 +80,6 @@
     <ClCompile Include="VideoStatic.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ScreenAndAudioCapture.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="audio_mixer.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="CScreenDXGrabber.cpp">
       <Filter>源文件</Filter>
     </ClCompile>

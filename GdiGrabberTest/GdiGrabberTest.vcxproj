@@ -123,14 +123,12 @@
     <ClInclude Include="VideoStatic.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="audio_mixer.cpp" />
     <ClCompile Include="CScreenDXGrabber.cpp" />
     <ClCompile Include="CWASAudioCapture.cpp" />
     <ClCompile Include="dib.cpp" />
     <ClCompile Include="GdiGrabberTest.cpp" />
     <ClCompile Include="GdiGrabberTestDlg.cpp" />
     <ClCompile Include="CMediaFileRecorder.cpp" />
-    <ClCompile Include="ScreenAndAudioCapture.cpp" />
     <ClCompile Include="CScreenGdiGrabber.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

@@ -347,7 +347,7 @@ long CDib::yuv420p_2_rgb(const unsigned char* _yuv, unsigned char* _rgb, int _wi
 	unsigned int pixpos[4] = {0, 1, _width, _height + 1};
 	unsigned int originalPixpos[4] = {0, 1, _width, _width + 1};
 
-	unsigned int   x, y, p;
+	int   x, y, p;
 
 	long int yvalue;
 	long int l, r, g, b;
@@ -453,7 +453,7 @@ long CDib::rgb_2_yuv420p_same_size( const unsigned char* _rgb, unsigned char* _y
 	unsigned char* vplane  = _yuv + planeSize + (planeSize >> 2);
 	const unsigned char* rgbIndex = _rgb;
 
-	for (unsigned y = 0; y < _height; y++)
+	for (int y = 0; y < _height; y++)
 	{
 		unsigned char* yline  = yplane + (y * _width);
 		unsigned char* uline  = uplane + ((y >> 1) * halfWidth);
@@ -462,7 +462,7 @@ long CDib::rgb_2_yuv420p_same_size( const unsigned char* _rgb, unsigned char* _y
 		if (_flib)
 			rgbIndex = _rgb + (_width * (_height - 1 - y) * _rgbIncrement);
 
-		for (unsigned x = 0; x < _width; x += 2)
+		for (int x = 0; x < _width; x += 2)
 		{
 			if(_flibRB)	
 			{

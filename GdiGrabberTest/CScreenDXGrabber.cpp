@@ -180,7 +180,7 @@ namespace MediaFileRecorder
 
 			int64_t duration = timeGetTime() - begin_time;
 			char log[128] = { 0 };
-			sprintf(log, "DX capture interval: %lld \n", duration);
+			sprintf_s(log, "DX capture interval: %lld \n", duration);
 			OutputDebugStringA(log);
 		}
 	}

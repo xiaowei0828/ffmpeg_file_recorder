@@ -144,7 +144,7 @@ namespace MediaFileRecorder {
 			}
 
 			char log[128] = { 0 };
-			_snprintf(log, 128, "required interval: %lld, interval: %lld, bitblt time: %lld \n",
+			_snprintf_s(log, 128, "required interval: %lld, interval: %lld, bitblt time: %lld \n",
 				frame_interval_tick_ * 1000 / perf_freq_.QuadPart,
 				(GetCurrentTickCount() - last_tick_count_) * 1000 / perf_freq_.QuadPart,
 				duration);

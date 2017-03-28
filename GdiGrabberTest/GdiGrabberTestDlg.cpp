@@ -184,14 +184,6 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 	{
 		RECT grab_rect = { CAPTURE_LEFT, CAPTURE_TOP, CAPTURE_WIDTH, CAPTURE_HEIGHT };
 		
-
-		MediaFileRecorder::RecordInfo record_info;
-		strcpy(record_info.file_name, "test.mp4");
-		record_info.video_info.dst_width = CAPTURE_WIDTH;
-		record_info.video_info.dst_height = CAPTURE_HEIGHT;
-		record_info.video_info.frame_rate = CAPTURE_FRAME_RATE;
-		media_file_recorder_->Init(record_info);
-
 		screen_grabber_->SetGrabFrameRate(CAPTURE_FRAME_RATE);
 		screen_grabber_->SetGrabRect(CAPTURE_LEFT, CAPTURE_TOP, CAPTURE_LEFT + CAPTURE_WIDTH,
 			CAPTURE_TOP + CAPTURE_HEIGHT);
@@ -201,11 +193,29 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 
 		int ret = audio_capture_->InitSpeaker();
 		ret = audio_capture_->GetSoundCardAudioInfo(speaker_audio_info_);
-		ret =audio_capture_->StartCaptureSoundCard();
+		ret = audio_capture_->StartCaptureSoundCard();
+
+		MediaFileRecorder::RECORD_INFO record_info;
+		strcpy_s(record_info.file_name, "test.mp4");
+		record_info.video_info.src_width = CAPTURE_WIDTH;
+		record_info.video_info.src_height = CAPTURE_HEIGHT;
+		record_info.video_info.src_pix_fmt = MediaFileRecorder::PIX_FMT_BGR24;
+		record_info.video_info.dst_width = CAPTURE_WIDTH;
+		record_info.video_info.dst_height = CAPTURE_HEIGHT;
+		record_info.video_info.frame_rate = CAPTURE_FRAME_RATE;
+
+		record_info.speaker_audio_info = speaker_audio_info_;
+		record_info.is_record_speaker = true;
+		record_info.is_record_video = true;
+
+		media_file_recorder_->Init(record_info);
+		media_file_recorder_->Start();
+		/*int ret = audio_capture_->InitMic();
+		ret = audio_capture_->GetMicAudioInfo(mic_audio_info_);
+		ret = audio_capture_->StartCaptureMic();*/
 
 		record_started_ = true;
 		m_ButtonStart.SetWindowTextW(L"ֹͣ");
-		media_file_recorder_->Start();
 		start_capture_time_ = timeGetTime();
 		duration_ = 0;
 	}
@@ -213,6 +223,8 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 	{
 		record_started_ = false;
 		screen_grabber_->StopGrab();
+		/*audio_capture_->StopCaptureMic();
+		audio_capture_->UnInitMic();*/
 		audio_capture_->StopCaptureSoundCard();
 		audio_capture_->UnInitSpeaker();
 		media_file_recorder_->Stop();
@@ -226,7 +238,7 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 			duration_ += timeGetTime() - start_capture_time_;
 		
 		char log[128] = { 0 };
-		_snprintf(log, 128, "duration: %lld \n", duration_);
+		_snprintf_s(log, 128, "duration: %lld \n", duration_);
 		OutputDebugStringA(log);
 	}
 		
@@ -243,7 +255,7 @@ void CGdiGrabberTestDlg::OnScreenData(void* data, int width, int height, MediaFi
 {
 	if (media_file_recorder_)
 	{
-		media_file_recorder_->FillVideo(data, width, height, pix_fmt);
+		media_file_recorder_->FillVideo(data);
 	}
 }
 
@@ -262,7 +274,7 @@ void CGdiGrabberTestDlg::OnBnClickedButtonInterrupt()
 
 			duration_ += timeGetTime() - start_capture_time_;
 			char log[128] = { 0 };
-			_snprintf(log, 128, "duration: %lld \n", duration_);
+			_snprintf_s(log, 128, "duration: %lld \n", duration_);
 			OutputDebugStringA(log);
 		}
 		else
@@ -280,8 +292,7 @@ void CGdiGrabberTestDlg::OnCapturedMicData(const void* audioSamples, int nSample
 {
 	if (media_file_recorder_)
 	{
-		media_file_recorder_->FillAudio(audioSamples, nSamples, mic_audio_info_.sample_rate,
-			mic_audio_info_.chl_layout, mic_audio_info_.audio_format);
+		media_file_recorder_->FillMicAudio(audioSamples, nSamples);
 	}
 }
 
@@ -289,7 +300,6 @@ void CGdiGrabberTestDlg::OnCapturedSoundCardData(const void* audioSamples, int n
 {
 	if (media_file_recorder_)
 	{
-		media_file_recorder_->FillAudio(audioSamples, nSamples, speaker_audio_info_.sample_rate,
-			speaker_audio_info_.chl_layout, speaker_audio_info_.audio_format);
+		media_file_recorder_->FillSpeakerAudio(audioSamples, nSamples);
 	}
 }

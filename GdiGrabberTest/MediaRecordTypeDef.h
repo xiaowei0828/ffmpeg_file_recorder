@@ -5,6 +5,7 @@ namespace MediaFileRecorder
 {
 	enum PIX_FMT
 	{
+		PIX_FMT_UNKOWN = 0,
 		PIX_FMT_RGB24,
 		PIX_FMT_BGR24,
 		PIX_FMT_ARGB,
@@ -13,7 +14,7 @@ namespace MediaFileRecorder
 
 	enum AUDIO_FORMAT
 	{
-		AUDIO_FORMAT_UNKNOWN,
+		AUDIO_FORMAT_UNKNOWN = 0,
 
 		AUDIO_FORMAT_U8BIT,
 		AUDIO_FORMAT_16BIT,
@@ -28,7 +29,7 @@ namespace MediaFileRecorder
 
 	enum CHANNEL_LAYOUT
 	{
-		SPEAKERS_UNKNOWN,
+		SPEAKERS_UNKNOWN = 0,
 		SPEAKERS_MONO,
 		SPEAKERS_STEREO,
 		SPEAKERS_2POINT1,
@@ -41,36 +42,47 @@ namespace MediaFileRecorder
 		SPEAKERS_SURROUND,
 	};
 
+	struct VIDEO_INFO
+	{
+		int src_width;
+		int src_height;
+		PIX_FMT src_pix_fmt;
+		int dst_width;
+		int dst_height;
+		int frame_rate;
+		int bit_rate;
+		VIDEO_INFO()
+		{
+			memset(this, 0, sizeof(VIDEO_INFO));
+		}
+	};
+
 	struct AUDIO_INFO
 	{
 		int sample_rate;
 		AUDIO_FORMAT audio_format;
 		CHANNEL_LAYOUT chl_layout;
+		AUDIO_INFO()
+		{
+			memset(this, 0, sizeof(AUDIO_INFO));
+		}
 	};
 
-
-	struct RecordInfo
+	struct RECORD_INFO
 	{
 		char file_name[1024];
-		struct Video
-		{
-			int dst_width;
-			int dst_height;
-			int frame_rate;
-			int bit_rate;
-		}video_info;
-
-		struct Audio
-		{
-		}audio_info;
-
-		RecordInfo()
+		bool is_record_video;
+		bool is_record_mic;
+		bool is_record_speaker;
+		VIDEO_INFO video_info;
+		AUDIO_INFO mic_audio_info;
+		AUDIO_INFO speaker_audio_info;
+		RECORD_INFO()
 		{
 			memset(file_name, 0, 1024);
-			video_info.dst_width = 0;
-			video_info.dst_height = 0;
-			video_info.frame_rate = 0;
-			video_info.bit_rate = 0;
+			is_record_video = false;
+			is_record_mic = false;
+			is_record_speaker = false;
 		}
 	};
 
