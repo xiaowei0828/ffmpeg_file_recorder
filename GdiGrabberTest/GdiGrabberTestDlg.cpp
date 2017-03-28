@@ -189,11 +189,14 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 			CAPTURE_TOP + CAPTURE_HEIGHT);
 		screen_grabber_->RegisterDataCb(this);
 		screen_grabber_->RegisterDataCb(&m_StaticPic);
-		screen_grabber_->StartGrab();
+		//screen_grabber_->StartGrab();
 
 		int ret = audio_capture_->InitSpeaker();
+		ret = audio_capture_->InitMic();
+		ret = audio_capture_->GetMicAudioInfo(mic_audio_info_);
 		ret = audio_capture_->GetSoundCardAudioInfo(speaker_audio_info_);
 		ret = audio_capture_->StartCaptureSoundCard();
+		ret = audio_capture_->StartCaptureMic();
 
 		MediaFileRecorder::RECORD_INFO record_info;
 		strcpy_s(record_info.file_name, "test.mp4");
@@ -205,8 +208,10 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 		record_info.video_info.frame_rate = CAPTURE_FRAME_RATE;
 
 		record_info.speaker_audio_info = speaker_audio_info_;
+		record_info.mic_audio_info = mic_audio_info_;
 		record_info.is_record_speaker = true;
-		record_info.is_record_video = true;
+		record_info.is_record_video = false;
+		record_info.is_record_mic = true;
 
 		media_file_recorder_->Init(record_info);
 		media_file_recorder_->Start();

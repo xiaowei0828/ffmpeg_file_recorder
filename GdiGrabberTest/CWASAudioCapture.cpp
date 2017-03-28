@@ -460,11 +460,6 @@ namespace MediaFileRecorder
 						return;
 					}
 
-					if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
-					{
-						buffer = NULL;
-					}
-
 					for (auto iter : m_vecDataCb)
 					{
 						iter->OnCapturedMicData(buffer, frames);

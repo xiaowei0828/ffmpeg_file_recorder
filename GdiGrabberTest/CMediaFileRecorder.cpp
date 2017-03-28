@@ -23,9 +23,7 @@ namespace MediaFileRecorder
 		m_pOutPicBuffer(NULL),
 		m_pInVideoFrame(NULL),
 		m_pInPicBuffer(NULL),
-		m_pAudioFrame(NULL),
 		m_nPicSize(0),
-		m_pAudioBuffer(NULL),
 		m_pVideoFifoBuffer(NULL),
 		m_nVideoFrameIndex(0),
 		m_nAudioFrameIndex(0),
@@ -35,7 +33,9 @@ namespace MediaFileRecorder
 		m_nVideoWriteFrames(0),
 		m_nVideoDiscardFrames(0),
 		m_pMicRecorder(new CAudioRecordBuffer()),
-		m_pSpeakerRecorder(new CAudioRecordBuffer())
+		m_pSpeakerRecorder(new CAudioRecordBuffer()),
+		m_pVideoPacket(NULL),
+		m_pAudioPacket(NULL)
 	{
 		m_bRun = false;
 		av_log_set_callback(av_log_cb);
@@ -128,14 +128,14 @@ namespace MediaFileRecorder
 
 		m_pVideoCodecCtx->time_base.num = 1;
 		m_pVideoCodecCtx->time_base.den = m_stRecordInfo.video_info.frame_rate;
-		m_pVideoCodecCtx->thread_count = 4;
+		m_pVideoCodecCtx->thread_count = 5;
 		//m_pVideoCodecCtx->bit_rate = 1024 * 512 * 8;
 
 		m_pVideoCodecCtx->max_qdiff = 4;
-		m_pVideoCodecCtx->qmin = 10;
+		m_pVideoCodecCtx->qmin = 20;
 		m_pVideoCodecCtx->qmax = 30;
 		m_pVideoCodecCtx->qcompress = (float)0.6;
-		m_pVideoCodecCtx->gop_size = m_stRecordInfo.video_info.frame_rate * 5;
+		m_pVideoCodecCtx->gop_size = m_stRecordInfo.video_info.frame_rate * 10;
 
 		//m_pVideoCodecCtx->flags &= CODEC_FLAG_QSCALE;
 		// Set option
@@ -176,7 +176,8 @@ namespace MediaFileRecorder
 		avpicture_fill((AVPicture*)m_pInVideoFrame, m_pInPicBuffer, m_pVideoCodecCtx->pix_fmt,
 			m_pVideoCodecCtx->width, m_pVideoCodecCtx->height);
 
-		av_new_packet(&m_VideoPacket, m_nPicSize);
+		m_pVideoPacket = new AVPacket();
+		av_new_packet(m_pVideoPacket, m_nPicSize);
 
 		// Init swscontext
 		AVPixelFormat av_pix_fmt;
@@ -221,7 +222,13 @@ namespace MediaFileRecorder
 
 	void CMediaFileRecorder::VideoCleanUp()
 	{
-		av_free_packet(&m_VideoPacket);
+		if (m_pVideoPacket)
+		{
+			av_free_packet(m_pVideoPacket);
+			delete m_pVideoPacket;
+			m_pVideoPacket = NULL;
+		}
+		
 		if (m_pVideoCodecCtx)
 		{
 			avcodec_close(m_pVideoCodecCtx);
@@ -304,17 +311,11 @@ namespace MediaFileRecorder
 			return -1;
 		}
 
-		m_pAudioFrame = av_frame_alloc();
-		m_pAudioFrame->nb_samples = m_pAudioCodecCtx->frame_size;
-		m_pAudioFrame->format = m_pAudioCodecCtx->sample_fmt;
-
 		int nAudioSize = av_samples_get_buffer_size(NULL, m_pAudioCodecCtx->channels,
 			m_pAudioCodecCtx->frame_size, m_pAudioCodecCtx->sample_fmt, 1);
-		m_pAudioBuffer = (uint8_t *)av_malloc(nAudioSize);
-		avcodec_fill_audio_frame(m_pAudioFrame, m_pAudioCodecCtx->channels,
-			m_pAudioCodecCtx->sample_fmt, (const uint8_t*)m_pAudioBuffer, nAudioSize, 1);
 
-		av_new_packet(&m_AudioPacket, nAudioSize);
+		m_pAudioPacket = new AVPacket();
+		av_new_packet(m_pAudioPacket, nAudioSize);
 
 		if (m_stRecordInfo.is_record_mic)
 		{
@@ -351,21 +352,16 @@ namespace MediaFileRecorder
 
 	void CMediaFileRecorder::AudioCleanUp()
 	{
-		av_free_packet(&m_AudioPacket);
+		if (m_pAudioPacket)
+		{
+			av_free_packet(m_pAudioPacket);
+			delete m_pAudioPacket;
+			m_pAudioPacket = NULL;
+		}
 		if (m_pAudioCodecCtx)
 		{
 			avcodec_close(m_pAudioCodecCtx);
 			m_pAudioCodecCtx = NULL;
-		}
-		if (m_pAudioFrame)
-		{
-			av_free(m_pAudioFrame);
-			m_pAudioFrame = NULL;
-		}
-		if (m_pAudioBuffer)
-		{
-			av_free(m_pAudioBuffer);
-			m_pAudioBuffer = NULL;
 		}
 
 		m_nAudioFrameIndex = 0;
@@ -518,11 +514,19 @@ namespace MediaFileRecorder
 	void CMediaFileRecorder::StartWriteFileThread()
 	{
 		m_bRun = true;
-		m_WriteVideoThread.swap(std::thread(std::bind(&CMediaFileRecorder::VideoWriteFileThreadProc, this)));
-		SetThreadPriority(m_WriteVideoThread.native_handle(), THREAD_PRIORITY_TIME_CRITICAL);
+		if (m_stRecordInfo.is_record_video)
+		{
+			m_WriteVideoThread.swap(std::thread(std::bind(&CMediaFileRecorder::VideoWriteFileThreadProc, this)));
+			SetThreadPriority(m_WriteVideoThread.native_handle(), THREAD_PRIORITY_TIME_CRITICAL);
+		}
+		if (m_stRecordInfo.is_record_mic ||
+			m_stRecordInfo.is_record_speaker)
+		{
+			m_WriteAudioThread.swap(std::thread(std::bind(&CMediaFileRecorder::AuidoWriteFileThreadProc, this)));
+			SetThreadPriority(m_WriteAudioThread.native_handle(), THREAD_PRIORITY_TIME_CRITICAL);
+		}
 
-		m_WriteAudioThread.swap(std::thread(std::bind(&CMediaFileRecorder::AuidoWriteFileThreadProc, this)));
-		SetThreadPriority(m_WriteAudioThread.native_handle(), THREAD_PRIORITY_TIME_CRITICAL);
+		
 	}
 
 	void CMediaFileRecorder::StopWriteFileThread()
@@ -609,13 +613,10 @@ namespace MediaFileRecorder
 			av_fifo_generic_read(m_pVideoFifoBuffer, m_pOutPicBuffer, m_nPicSize, NULL);
 			LeaveCriticalSection(&m_VideoSection);
 
-			//m_pOutVideoFrame->pts = nCaptureTime *
-			//	((m_pVideoStream->time_base.den / m_pVideoStream->time_base.num)) / 1000;
-
 			int bGotPicture = 0;
 
 			int64_t encode_start_time = timeGetTime();
-			int ret = avcodec_encode_video2(m_pVideoCodecCtx, &m_VideoPacket, m_pOutVideoFrame, &bGotPicture);
+			int ret = avcodec_encode_video2(m_pVideoCodecCtx, m_pVideoPacket, m_pOutVideoFrame, &bGotPicture);
 			int64_t encode_duration = timeGetTime() - encode_start_time;
 
 			if (ret < 0)
@@ -625,13 +626,13 @@ namespace MediaFileRecorder
 
 			if (bGotPicture == 1)
 			{
-				m_VideoPacket.stream_index = 0;
-				m_VideoPacket.pts = nCaptureTime * m_stRecordInfo.video_info.frame_rate / 1000;
-				m_VideoPacket.dts = m_VideoPacket.pts;
+				AVStream* pStream = m_pFormatCtx->streams[0];
+				m_pVideoPacket->pts = nCaptureTime *(pStream->time_base.den/pStream->time_base.num) / 1000;
+				m_pVideoPacket->dts = m_pVideoPacket->pts;
 				//m_VideoPacket.duration = 1;
 
 				EnterCriticalSection(&m_WriteFileSection);
-				ret = av_interleaved_write_frame(m_pFormatCtx, &m_VideoPacket);
+				ret = av_interleaved_write_frame(m_pFormatCtx, m_pVideoPacket);
 				LeaveCriticalSection(&m_WriteFileSection);
 
 				char log[128] = { 0 };
@@ -661,62 +662,73 @@ namespace MediaFileRecorder
 	void CMediaFileRecorder::EncodeAndWriteAudio()
 	{
 		int64_t begin_time = timeGetTime();
-		AVFrame* pMicFrame = NULL;
-		AVFrame* pSpeakerFrame = NULL;
-		if (m_stRecordInfo.is_record_mic)
-			pMicFrame = m_pMicRecorder->GetOneFrame();
+		AVFrame* pDstFrame = NULL;
 
 		if (m_stRecordInfo.is_record_speaker)
-			pSpeakerFrame = m_pSpeakerRecorder->GetOneFrame();
-
-		if (!pMicFrame && !pSpeakerFrame)
-			return;
-
-		AVFrame* pDstFrame = NULL;
-		if (!pMicFrame)
-			pDstFrame = pSpeakerFrame;
-		else if (!pSpeakerFrame)
-			pDstFrame = pMicFrame;
-		else
 		{
-			for (int i = 0; i < m_pAudioCodecCtx->frame_size * 4; i++)
-			{
-				pSpeakerFrame->data[0][i] = 0.5 * pSpeakerFrame->data[0][i] + 0.5 * pMicFrame->data[0][i];
-				pSpeakerFrame->data[0][1] = 0.5 * pSpeakerFrame->data[0][i] + 0.5 * pMicFrame->data[0][1];
-			}
-			pDstFrame = pSpeakerFrame;
+			pDstFrame = m_pSpeakerRecorder->GetOneFrame();
+			if (!pDstFrame)
+				return;
 		}
-		
+
+		if (m_stRecordInfo.is_record_mic)
+		{
+			AVFrame* pMicFrame = m_pMicRecorder->GetOneFrame();
+			if (pMicFrame)
+			{
+				float* left1 = (float*)pDstFrame->data[0];
+				float* right1 = (float*)pDstFrame->data[1];
+				float* left2 = (float*)pMicFrame->data[0];
+				float* right2 = (float*)pMicFrame->data[1];
+				for (int i = 0; i < m_pAudioCodecCtx->frame_size; i++)
+				{
+					MixAudio(left1[i], left1[i], left2[i]);
+					MixAudio(right1[i], right1[i], right2[i]);
+				}
+			}
+		}
+		int64_t mix_time = timeGetTime() - begin_time;
 
 		if (pDstFrame)
 		{
 			int got_picture = 0;
 			//pSpeakerFrame->pts = m_nAudioFrameIndex * m_pAudioCodecCtx->frame_size;
-			if (avcodec_encode_audio2(m_pAudioCodecCtx, &m_AudioPacket, pDstFrame, &got_picture) < 0)
+			if (avcodec_encode_audio2(m_pAudioCodecCtx, m_pAudioPacket, pDstFrame, &got_picture) < 0)
 			{
 				OutputDebugStringA("avcodec_encode_audio2 failed");
 			}
 			if (got_picture)
 			{
 				int64_t pts = (m_nDuration + (timeGetTime() - m_nStartTime)) * m_pAudioCodecCtx->sample_rate / 1000;
-				m_AudioPacket.stream_index = 1;
-				m_AudioPacket.pts = pts/*m_nAudioFrameIndex * m_pAudioCodecCtx->frame_size*/;
-				m_AudioPacket.dts = pts/*m_nAudioFrameIndex * m_pAudioCodecCtx->frame_size*/;
-				m_AudioPacket.duration = m_pAudioCodecCtx->frame_size;
+				m_pAudioPacket->pts = pts/*m_nAudioFrameIndex * m_pAudioCodecCtx->frame_size*/;
+				m_pAudioPacket->dts = pts/*m_nAudioFrameIndex * m_pAudioCodecCtx->frame_size*/;
+				m_pAudioPacket->duration = m_pAudioCodecCtx->frame_size;
 
 
 				//cur_pts_a = m_AudioPacket.pts;
 
 				EnterCriticalSection(&m_WriteFileSection);
-				av_interleaved_write_frame(m_pFormatCtx, &m_AudioPacket);
+				av_interleaved_write_frame(m_pFormatCtx, m_pAudioPacket);
 				LeaveCriticalSection(&m_WriteFileSection);
 				m_nAudioFrameIndex++;
 			}
 		}
-		/*int64_t duration = timeGetTime() - begin_time;
+		int64_t duration = timeGetTime() - begin_time;
 		char log[128] = { 0 };
-		sprintf(log, "Write audio file: %lld \n", duration);
-		OutputDebugStringA(log);*/
+		sprintf_s(log, "Mix audio time: %lld \n", mix_time);
+		OutputDebugStringA(log);
+	}
+
+	void CMediaFileRecorder::MixAudio(float& dst, float& src1, float& src2)
+	{
+		if (src1 < 0 && src2 < 0)
+		{
+			dst = (src1 + src2) - src1 * src2 / (-(pow(2, 32 - 1) - 1));
+		}
+		else
+		{
+			dst = (src1 + src2) - src1 * src2 /(pow(2, 32 - 1));
+		}
 	}
 
 

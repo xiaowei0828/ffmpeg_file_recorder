@@ -69,6 +69,8 @@ namespace MediaFileRecorder
 		void EncodeAndWriteVideo();
 		void EncodeAndWriteAudio();
 
+		void MixAudio(float& dst, float& src1, float& src2);
+
 	private:
 		bool m_bInited;
 		std::atomic_bool m_bRun;
@@ -76,15 +78,13 @@ namespace MediaFileRecorder
 		AVFormatContext* m_pFormatCtx;
 		AVCodecContext* m_pVideoCodecCtx;
 		AVCodecContext* m_pAudioCodecCtx;
-		AVPacket m_VideoPacket;
-		AVPacket m_AudioPacket;
+		AVPacket* m_pVideoPacket;
+		AVPacket* m_pAudioPacket;
 		int m_nPicSize;
 		AVFrame* m_pOutVideoFrame;
 		uint8_t* m_pOutPicBuffer;
 		AVFrame* m_pInVideoFrame;
 		uint8_t* m_pInPicBuffer;
-		AVFrame* m_pAudioFrame;
-		uint8_t* m_pAudioBuffer;
 
 		SwsContext* m_pVideoConvertCtx;
 
