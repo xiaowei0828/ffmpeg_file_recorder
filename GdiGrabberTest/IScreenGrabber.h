@@ -17,14 +17,14 @@ namespace MediaFileRecorder {
 	class IScreenGrabber
 	{
 	public:
-		virtual void RegisterDataCb(IScreenGrabberDataCb* cb) = 0;
-		virtual void UnRegisterDataCb(IScreenGrabberDataCb* cb) = 0;
+		virtual int RegisterDataCb(IScreenGrabberDataCb* cb) = 0;
+		virtual int UnRegisterDataCb(IScreenGrabberDataCb* cb) = 0;
 
-		virtual void SetGrabRect(int left, int top, int right, int bottom) = 0;
-		virtual void SetGrabFrameRate(int frame_rate) = 0;
+		virtual int SetGrabRect(int left, int top, int right, int bottom) = 0;
+		virtual int SetGrabFrameRate(int frame_rate) = 0;
 
-		virtual bool StartGrab() = 0;
-		virtual void StopGrab() = 0;
+		virtual int StartGrab() = 0;
+		virtual int StopGrab() = 0;
 
 	protected:
 		virtual ~IScreenGrabber(){}

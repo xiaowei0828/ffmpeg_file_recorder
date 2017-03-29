@@ -24,39 +24,59 @@ namespace MediaFileRecorder
 		}
 	}
 
-	void CScreenDXGrabber::RegisterDataCb(IScreenGrabberDataCb* cb)
+	int CScreenDXGrabber::RegisterDataCb(IScreenGrabberDataCb* cb)
 	{
-		vec_data_cb_.push_back(cb);
+		if (find(vec_data_cb_.begin(), vec_data_cb_.end(), cb) ==
+			vec_data_cb_.end())
+		{
+			vec_data_cb_.push_back(cb);
+			return 0;
+		}
+		return -1;
 	}
 
-	void CScreenDXGrabber::UnRegisterDataCb(IScreenGrabberDataCb* cb)
+	int CScreenDXGrabber::UnRegisterDataCb(IScreenGrabberDataCb* cb)
 	{
 		auto iter = std::find(vec_data_cb_.begin(), vec_data_cb_.end(), cb);
 		if (iter != vec_data_cb_.end())
 		{
 			vec_data_cb_.erase(iter);
+			return 0;
 		}
+		return -1;
 	}
 
-	void CScreenDXGrabber::SetGrabRect(int left, int top, int right, int bottom)
+	int CScreenDXGrabber::SetGrabRect(int left, int top, int right, int bottom)
 	{
-		grab_rect_.left = left;
-		grab_rect_.top = top;
-		grab_rect_.right = right;
-		grab_rect_.bottom = bottom;
+		if (!started_)
+		{
+			grab_rect_.left = left;
+			grab_rect_.top = top;
+			grab_rect_.right = right;
+			grab_rect_.bottom = bottom;
+			return 0;
+		}
+		return -1;
+		
 	}
 
-	void CScreenDXGrabber::SetGrabFrameRate(int frame_rate)
+	int CScreenDXGrabber::SetGrabFrameRate(int frame_rate)
 	{
-		frame_rate_ = frame_rate;
+		if (!started_)
+		{
+			frame_rate_ = frame_rate;
+			return 0;
+		}
+		return -1;
+		
 	}
 
-	bool CScreenDXGrabber::StartGrab()
+	int CScreenDXGrabber::StartGrab()
 	{
 		if (started_)
 		{
 			OutputDebugStringA("Already started \n");
-			return false;
+			return -1;
 		}
 
 		QueryPerformanceFrequency(&perf_freq_);
@@ -74,14 +94,16 @@ namespace MediaFileRecorder
 	}
 
 
-	void CScreenDXGrabber::StopGrab()
+	int CScreenDXGrabber::StopGrab()
 	{
 		if (started_)
 		{
 			StopGrabThread();
 			UnInitD3D();
 			started_ = false;
+			return 0;
 		}
+		return -1;
 	}
 	bool CScreenDXGrabber::InitD3D()
 	{

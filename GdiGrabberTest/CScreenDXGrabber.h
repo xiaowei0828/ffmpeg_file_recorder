@@ -16,14 +16,14 @@ namespace MediaFileRecorder
 		CScreenDXGrabber();
 		~CScreenDXGrabber();
 
-		void RegisterDataCb(IScreenGrabberDataCb* cb) override;
-		void UnRegisterDataCb(IScreenGrabberDataCb* cb) override;
+		int RegisterDataCb(IScreenGrabberDataCb* cb) override;
+		int UnRegisterDataCb(IScreenGrabberDataCb* cb) override;
 
-		void SetGrabRect(int left, int top, int right, int bottom) override;
-		void SetGrabFrameRate(int frame_rate) override;
+		int SetGrabRect(int left, int top, int right, int bottom) override;
+		int SetGrabFrameRate(int frame_rate) override;
 
-		bool StartGrab() override;
-		void StopGrab() override;
+		int StartGrab() override;
+		int StopGrab() override;
 
 	private:
 

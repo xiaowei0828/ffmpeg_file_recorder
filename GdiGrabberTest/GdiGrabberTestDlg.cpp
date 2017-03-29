@@ -9,6 +9,7 @@
 #include "CScreenGdiGrabber.h"
 #include "CScreenDXGrabber.h"
 #include "CWASAudioCapture.h"
+#include "CScreenDXGIGrabber.h"
 #include <MMSystem.h>
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -206,7 +207,7 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 		record_info.video_info.dst_width = CAPTURE_WIDTH;
 		record_info.video_info.dst_height = CAPTURE_HEIGHT;
 		record_info.video_info.frame_rate = CAPTURE_FRAME_RATE;
-		record_info.video_info.quality = MediaFileRecorder::NORMAL;
+		record_info.video_info.quality = MediaFileRecorder::HIGH;
 
 		record_info.speaker_audio_info = speaker_audio_info_;
 		record_info.mic_audio_info = mic_audio_info_;

@@ -154,7 +154,7 @@ namespace MediaFileRecorder
 			m_pVideoCodecCtx->qmax = 30;
 		}
 
-		//m_pVideoCodecCtx->keyint_min = m_stRecordInfo.video_info.frame_rate;
+		m_pVideoCodecCtx->keyint_min = m_stRecordInfo.video_info.frame_rate;
 		m_pVideoCodecCtx->gop_size = m_stRecordInfo.video_info.frame_rate * 10;
 
 		//m_pVideoCodecCtx->flags &= CODEC_FLAG_QSCALE;
@@ -473,6 +473,7 @@ namespace MediaFileRecorder
 			int64_t nVideoCaptureTime = m_nDuration + (timeGetTime() - m_nStartTime);
 			int size = video_info.dst_width * video_info.dst_height;
 
+			int64_t scale_time = 0;
 			if (av_fifo_space(m_pVideoFifoBuffer) >= m_nPicSize + (int)sizeof(int64_t))
 			{
 				int bytes_per_pix;
@@ -483,10 +484,12 @@ namespace MediaFileRecorder
 					video_info.src_pix_fmt == PIX_FMT_RGB24)
 					bytes_per_pix = 3;
 
+				
 				uint8_t* srcSlice[3] = { (uint8_t*)data, NULL, NULL };
 				int srcStride[3] = { bytes_per_pix * video_info.src_width, 0, 0 };
 				sws_scale(m_pVideoConvertCtx, srcSlice, srcStride, 0, video_info.src_height,
 					m_pInVideoFrame->data, m_pInVideoFrame->linesize);
+				scale_time = timeGetTime() - begin_time;
 
 				EnterCriticalSection(&m_VideoSection);
 				av_fifo_generic_write(m_pVideoFifoBuffer, &nVideoCaptureTime, sizeof(int64_t), NULL);
@@ -504,7 +507,7 @@ namespace MediaFileRecorder
 			}
 			int64_t duration = timeGetTime() - begin_time;
 			char log[128] = { 0 };
-			_snprintf_s(log, 128, "FillVideo spend time: %lld \n", duration);
+			_snprintf_s(log, 128, "FillVideo spend time: %lld, scale time: %lld \n", duration, scale_time);
 			OutputDebugStringA(log);
 		}
 		return ret;
