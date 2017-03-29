@@ -69,7 +69,7 @@ namespace MediaFileRecorder
 		void EncodeAndWriteVideo();
 		void EncodeAndWriteAudio();
 
-		void MixAudio(float& dst, float& src1, float& src2);
+		void MixAudio(AVFrame* pDstFrame, const AVFrame* pSrcFrame);
 
 	private:
 		bool m_bInited;
@@ -85,6 +85,10 @@ namespace MediaFileRecorder
 		uint8_t* m_pOutPicBuffer;
 		AVFrame* m_pInVideoFrame;
 		uint8_t* m_pInPicBuffer;
+
+		AVFrame* m_pAudioFrame;
+		uint8_t* m_pAudioBuffer;
+		uint32_t m_nAudioSize;
 
 		SwsContext* m_pVideoConvertCtx;
 
@@ -108,6 +112,8 @@ namespace MediaFileRecorder
 
 		std::shared_ptr<CAudioRecordBuffer> m_pMicRecorder;
 		std::shared_ptr<CAudioRecordBuffer> m_pSpeakerRecorder;
+		uint32_t m_nVideoStreamIndex;
+		uint32_t m_nAudioStreamIndex;
 	};
 
 	class CAudioRecordBuffer
@@ -139,6 +145,9 @@ namespace MediaFileRecorder
 	static inline bool ConvertToAVSampleFormat(AUDIO_FORMAT audio_fmt, AVSampleFormat& av_sample_fmt);
 	static inline bool ConvertToAVChannelLayOut(CHANNEL_LAYOUT channel_lay_out, int64_t& av_chl_layout);
 	static inline bool ConvertToAVPixelFormat(PIX_FMT pix_fmt, AVPixelFormat& av_pix_fmt);
+	static inline uint32_t GetAudioChannels(CHANNEL_LAYOUT chl_layout);
+	static inline size_t GetAudioPlanes(AUDIO_FORMAT audio_fmt, CHANNEL_LAYOUT chl_layout);
+	static inline bool IsAudioPlanar(AUDIO_FORMAT audio_fmt);
 }
 
 

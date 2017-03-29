@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="base">
+      <UniqueIdentifier>{49cf4550-6ba1-4496-81f8-0ffb33152c0e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -63,6 +66,9 @@
     <ClInclude Include="MediaRecordTypeDef.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="base\system_info.h">
+      <Filter>base</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GdiGrabberTest.cpp">
@@ -91,6 +97,9 @@
     </ClCompile>
     <ClCompile Include="CWASAudioCapture.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="base\system_info.cpp">
+      <Filter>base</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

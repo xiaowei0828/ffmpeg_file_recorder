@@ -99,6 +99,7 @@ namespace MediaFileRecorder {
 			ReleaseDC(NULL, src_dc_);
 			DeleteDC(dst_dc_);
 			DeleteObject(hbmp_);
+			DeleteObject(m_hGrabTimer);
 			started_ = false;
 		}
 	}

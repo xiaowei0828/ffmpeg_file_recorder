@@ -99,7 +99,7 @@ namespace MediaFileRecorder
 
 		if (m_strUtf8MicID.empty())
 		{
-			res = enumerator->GetDefaultAudioEndpoint(eCapture, eCommunications, &m_pMicDev);
+			res = enumerator->GetDefaultAudioEndpoint(eCapture, eConsole, &m_pMicDev);
 		}
 		else
 		{
@@ -236,7 +236,8 @@ namespace MediaFileRecorder
 
 		InitFormat(pWfex, m_SpeakerAudioInfo);
 
-		res = m_pSpeakerAudioClient->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK,
+		res = m_pSpeakerAudioClient->Initialize(AUDCLNT_SHAREMODE_SHARED, 
+			AUDCLNT_STREAMFLAGS_LOOPBACK,
 			REFERENCE_TIME_VAL, 0, pWfex, NULL);
 		if (FAILED(res))
 		{
@@ -269,6 +270,7 @@ namespace MediaFileRecorder
 			m_pSpeakerCaptureClient.Release();
 			m_pSpeakerAudioClient.Release();
 			m_pSpeakerDev.Release();
+			m_pRenderClient.Release();
 			m_bSpeakerInited = false;
 			return 0;
 		}
@@ -428,7 +430,7 @@ namespace MediaFileRecorder
 		HANDLE waitArray[2] = { m_hMicCaptureStopEvent, m_hMicCaptureReadyEvent };
 		while (true)
 		{
-			DWORD result = WaitForMultipleObjects(2, waitArray, FALSE, INFINITE);
+			DWORD result = WaitForMultipleObjects(2, waitArray, FALSE, 500);
 			if (result == WAIT_OBJECT_0)
 			{
 				OutputDebugStringA("Mic Thread: receive stop signal, stop the thread \n");
@@ -468,6 +470,11 @@ namespace MediaFileRecorder
 					m_pMicCaptureClient->ReleaseBuffer(frames);
 				}
 			}
+			else if (result == WAIT_TIMEOUT)
+			{
+				OutputDebugStringA("Mic Thread: receive stop signal, stop the thread \n");
+				break;
+			}
 		}
 	}
 
@@ -498,6 +505,7 @@ namespace MediaFileRecorder
 						OutputDebugStringA("Speaker Thread: some exception occurs during get next pakect size, thread exit \n");
 						return;
 					}
+
 					if (!captureSize)
 						break;
 
@@ -523,7 +531,7 @@ namespace MediaFileRecorder
 			}
 		}
 	}
-
+	
 	int CWASAudioCapture::InitRender()
 	{
 		WAVEFORMATEX*              wfex;
@@ -531,7 +539,7 @@ namespace MediaFileRecorder
 		LPBYTE                     buffer;
 		UINT32                     frames;
 		CComPtr<IAudioClient>      client;
-		CComPtr<IAudioRenderClient> pRenderClient;
+	
 
 		res = m_pSpeakerDev->Activate(__uuidof(IAudioClient), CLSCTX_ALL,
 			nullptr, (void**)&client);
@@ -569,14 +577,14 @@ namespace MediaFileRecorder
 		}
 
 		res = client->GetService(__uuidof(IAudioRenderClient),
-			(void**)&pRenderClient);
+			(void**)&m_pRenderClient);
 		if (FAILED(res))
 		{
 			OutputDebugStringA("InitRender: audio client get render service failed");
 			return -1;
 		}
 
-		res = pRenderClient->GetBuffer(frames, &buffer);
+		res = m_pRenderClient->GetBuffer(frames, &buffer);
 		if (FAILED(res))
 		{
 			OutputDebugStringA("InitRender: render client get buffer failed");
@@ -585,7 +593,7 @@ namespace MediaFileRecorder
 
 		memset(buffer, 0, frames*wfex->nBlockAlign);
 
-		pRenderClient->ReleaseBuffer(frames, 0);
+		m_pRenderClient->ReleaseBuffer(frames, 0);
 
 		return 0;
 	}

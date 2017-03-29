@@ -42,6 +42,13 @@ namespace MediaFileRecorder
 		SPEAKERS_SURROUND,
 	};
 
+	enum VIDEO_QUALITY
+	{
+		NORMAL = 0,
+		HIGH,
+		VERY_HIGH
+	};
+
 	struct VIDEO_INFO
 	{
 		int src_width;
@@ -50,7 +57,7 @@ namespace MediaFileRecorder
 		int dst_width;
 		int dst_height;
 		int frame_rate;
-		int bit_rate;
+		VIDEO_QUALITY quality;
 		VIDEO_INFO()
 		{
 			memset(this, 0, sizeof(VIDEO_INFO));

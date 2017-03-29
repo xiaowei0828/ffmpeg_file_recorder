@@ -30,5 +30,9 @@ namespace MediaFileRecorder {
 		virtual ~IScreenGrabber(){}
 	};
 
+
+	IScreenGrabber* CreateScreenGrabber();
+	void DestroyScreenGrabber();
+	
 }
 #endif

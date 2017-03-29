@@ -63,6 +63,8 @@ namespace MediaFileRecorder
 		CComPtr<IMMDevice> m_pSpeakerDev;
 		CComPtr<IAudioCaptureClient> m_pSpeakerCaptureClient;
 
+		CComPtr<IAudioRenderClient> m_pRenderClient;
+
 		HANDLE m_hMicCaptureStopEvent;
 		HANDLE m_hMicCaptureReadyEvent;
 		HANDLE m_hSpeakerCaptureSopEvent;
