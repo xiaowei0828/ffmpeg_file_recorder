@@ -114,6 +114,9 @@ namespace MediaFileRecorder
 		std::shared_ptr<CAudioRecordBuffer> m_pSpeakerRecorder;
 		uint32_t m_nVideoStreamIndex;
 		uint32_t m_nAudioStreamIndex;
+
+		bool m_bSpeakerInited;
+		bool m_bMicInited;
 	};
 
 	class CAudioRecordBuffer

@@ -22,8 +22,8 @@ namespace MediaFileRecorder
 
 		int RegisterCaptureDataCb(IAudioCaptureDataCb* pDataCb) override;
 		int UnRegisterCaptureDataCb(IAudioCaptureDataCb* pDataCb) override;
-		int SetMic(const char* strUtf8MicID) override;
-		int SetSpeaker(const char* strUtf8SpeakerID) override;
+		int SetMic(int index) override;
+		int SetSpeaker(int index) override;
 		int InitMic() override;
 		int UnInitMic() override;
 		int InitSpeaker() override;
@@ -52,8 +52,8 @@ namespace MediaFileRecorder
 		std::vector<IAudioCaptureDataCb*> m_vecDataCb;
 		CRITICAL_SECTION m_sectionDataCb;
 
-		std::string m_strUtf8MicID;
-		std::string m_strUtf8SpeakerID;
+		int m_nMicIndex;
+		int m_nSpeakerIndex;
 
 		CComPtr<IMMDevice> m_pMicDev;
 		CComPtr<IAudioClient> m_pMicAudioClient;

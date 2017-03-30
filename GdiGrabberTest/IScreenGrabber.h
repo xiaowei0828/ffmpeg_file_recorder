@@ -26,13 +26,12 @@ namespace MediaFileRecorder {
 		virtual int StartGrab() = 0;
 		virtual int StopGrab() = 0;
 
-	protected:
 		virtual ~IScreenGrabber(){}
 	};
 
 
 	IScreenGrabber* CreateScreenGrabber();
-	void DestroyScreenGrabber();
+	void DestroyScreenGrabber(IScreenGrabber* pScreenGrabber);
 	
 }
 #endif

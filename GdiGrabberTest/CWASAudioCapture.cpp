@@ -9,6 +9,8 @@
 namespace MediaFileRecorder
 {
 	CWASAudioCapture::CWASAudioCapture()
+		:m_nMicIndex(-1),
+		m_nSpeakerIndex(-1)
 	{
 		m_bMicInited = false;
 		m_bSpeakerInited = false;
@@ -23,6 +25,23 @@ namespace MediaFileRecorder
 
 	CWASAudioCapture::~CWASAudioCapture()
 	{
+		if (m_bMicInited)
+		{
+			if (m_bCapturingMic)
+			{
+				StopCaptureMic();
+			}
+			UnInitMic();
+		}
+
+		if (m_bSpeakerInited)
+		{
+			if (m_bCapturingSpeaker)
+			{
+				StopCaptureSoundCard();
+			}
+			UnInitSpeaker();
+		}
 		if (m_hMicCaptureStopEvent)
 		{
 			CloseHandle(m_hMicCaptureStopEvent);
@@ -66,15 +85,15 @@ namespace MediaFileRecorder
 		return -1;
 	}
 
-	int CWASAudioCapture::SetMic(const char* strUtf8MicID)
+	int CWASAudioCapture::SetMic(int index)
 	{
-		m_strUtf8MicID = strUtf8MicID;
+		m_nMicIndex = index;
 		return 0;
 	}
 
-	int CWASAudioCapture::SetSpeaker(const char* strUtf8SpeakerID)
+	int CWASAudioCapture::SetSpeaker(int index)
 	{
-		m_strUtf8SpeakerID = strUtf8SpeakerID;
+		m_nSpeakerIndex = index;
 		return 0;
 	}
 
@@ -97,24 +116,31 @@ namespace MediaFileRecorder
 			return -1;
 		}
 
-		if (m_strUtf8MicID.empty())
+		if (m_nMicIndex == -1)
 		{
 			res = enumerator->GetDefaultAudioEndpoint(eCapture, eConsole, &m_pMicDev);
+			if (FAILED(res))
+			{
+				OutputDebugStringA("Get default mic device failed \n");
+				return -1;
+			}
 		}
 		else
 		{
-			int length = MultiByteToWideChar(CP_UTF8, NULL, m_strUtf8MicID.c_str(),
-				m_strUtf8MicID.length(), NULL, 0);
-			wchar_t* strU16DevID = new wchar_t[length + 1];
-			MultiByteToWideChar(CP_UTF8, NULL, m_strUtf8MicID.c_str(),
-				m_strUtf8MicID.length(), strU16DevID, length + 1);
-			res = enumerator->GetDevice(strU16DevID, &m_pMicDev);
-			delete strU16DevID;
-		}
-		if (FAILED(res))
-		{
-			OutputDebugStringA("Mic: Get Mic IMMdevice failed \n");
-			return -1;
+			CComPtr<IMMDeviceCollection> pDevCollection;
+			res = enumerator->EnumAudioEndpoints(eCapture, DEVICE_STATE_ACTIVE, &pDevCollection);
+			if (FAILED(res))
+			{
+				OutputDebugStringA("Get device collection failed \n");
+				return -1;
+			}
+
+			res = pDevCollection->Item(m_nMicIndex, &m_pMicDev);
+			if (FAILED(res))
+			{
+				OutputDebugStringA("Get mic device failed \n");
+				return -1;
+			}
 		}
 
 		res = m_pMicDev->Activate(__uuidof(IAudioClient), CLSCTX_ALL,
@@ -198,24 +224,31 @@ namespace MediaFileRecorder
 			return -1;
 		}
 
-		if (m_strUtf8SpeakerID.empty())
+		if (m_nSpeakerIndex == -1)
 		{
 			res = enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &m_pSpeakerDev);
+			if (FAILED(res))
+			{
+				OutputDebugStringA("Get default render device failed \n");
+				return -1;
+			}
 		}
 		else
 		{
-			int length = MultiByteToWideChar(CP_UTF8, NULL, m_strUtf8SpeakerID.c_str(),
-				m_strUtf8SpeakerID.length(), NULL, 0);
-			wchar_t* strU16DevID = new wchar_t[length + 1];
-			MultiByteToWideChar(CP_UTF8, NULL, m_strUtf8SpeakerID.c_str(),
-				m_strUtf8SpeakerID.length(), strU16DevID, length + 1);
-			res = enumerator->GetDevice(strU16DevID, &m_pSpeakerDev);
-			delete strU16DevID;
-		}
-		if (FAILED(res))
-		{
-			OutputDebugStringA("Get Speaker IMMdevice failed \n");
-			return -1;
+			CComPtr<IMMDeviceCollection> pDevCollection;
+			res = enumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &pDevCollection);
+			if (FAILED(res))
+			{
+				OutputDebugStringA("Get render device collection failed \n");
+				return -1;
+			}
+
+			res = pDevCollection->Item(m_nSpeakerIndex, &m_pSpeakerDev);
+			if (FAILED(res))
+			{
+				OutputDebugStringA("Get render device failed \n");
+				return -1;
+			}
 		}
 
 		res = m_pSpeakerDev->Activate(__uuidof(IAudioClient), CLSCTX_ALL,

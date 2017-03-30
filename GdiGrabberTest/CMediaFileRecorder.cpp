@@ -138,31 +138,28 @@ namespace MediaFileRecorder
 
 		m_pVideoCodecCtx->qcompress = 0.6;
 		m_pVideoCodecCtx->max_qdiff = 4;
-		if (video_info.quality == NORMAL)
-		{
-			m_pVideoCodecCtx->qmin = 35;
-			m_pVideoCodecCtx->qmax = 40;
-		}
-		else if (video_info.quality == HIGH)
-		{
-			m_pVideoCodecCtx->qmin = 30;
-			m_pVideoCodecCtx->qmax = 35;
-		}
-		else if (video_info.quality == VERY_HIGH)
-		{
-			m_pVideoCodecCtx->qmin = 25;
-			m_pVideoCodecCtx->qmax = 30;
-		}
+		m_pVideoCodecCtx->qmin = 0;
+		m_pVideoCodecCtx->qmax = 50;
 
 		m_pVideoCodecCtx->keyint_min = m_stRecordInfo.video_info.frame_rate;
 		m_pVideoCodecCtx->gop_size = m_stRecordInfo.video_info.frame_rate * 10;
 
-		//m_pVideoCodecCtx->flags &= CODEC_FLAG_QSCALE;
-		// Set option
+		const char* crf = "23";
+		if (video_info.quality == NORMAL)
+		{
+			crf = "28";
+		}
+		else if (video_info.quality == HIGH)
+		{
+			crf = "23";
+		}
+		else if (video_info.quality == VERY_HIGH)
+		{
+			crf = "18";
+		}
 		AVDictionary *param = 0;
-		av_dict_set(&param, "preset", "ultrafast", 0);
-		av_dict_set(&param, "tune", "zerolatency", 0);
-		/*av_dict_set(&param, "profile", "main", 0);*/
+		av_dict_set(&param, "preset", "veryfast", 0);
+		av_dict_set(&param, "crf", crf, 0);
 
 		AVCodec* pEncoder = avcodec_find_encoder(m_pVideoCodecCtx->codec_id);
 		if (!pEncoder)
@@ -350,7 +347,14 @@ namespace MediaFileRecorder
 			if (m_pMicRecorder->Init(m_pAudioCodecCtx, m_stRecordInfo.mic_audio_info) != 0)
 			{
 				OutputDebugStringA("failed to init mic recorder \n");
+				m_bMicInited == false;
 			}
+			else
+			{
+				OutputDebugStringA("init mic recorder succeed \n");
+				m_bMicInited = true;
+			}
+				
 		}
 
 		if (m_stRecordInfo.is_record_speaker)
@@ -358,6 +362,12 @@ namespace MediaFileRecorder
 			if (m_pSpeakerRecorder->Init(m_pAudioCodecCtx, m_stRecordInfo.speaker_audio_info) != 0)
 			{
 				OutputDebugStringA("failed to init speaker recorder \n");
+				m_bSpeakerInited = false;
+			}
+			else
+			{
+				OutputDebugStringA("init speaker recorder succeed \n");
+				m_bSpeakerInited = true;
 			}
 		}
 
@@ -367,7 +377,9 @@ namespace MediaFileRecorder
 	void CMediaFileRecorder::UnInitAudioRecord()
 	{
 		m_pMicRecorder->UnInit();
+		m_bMicInited = false;
 		m_pSpeakerRecorder->UnInit();
+		m_bSpeakerInited = false;
 
 		char log[128] = { 0 };
 		_snprintf_s(log, 128, "Write audio frame count: %lld \n",
@@ -517,7 +529,7 @@ namespace MediaFileRecorder
 	int CMediaFileRecorder::FillMicAudio(const void* audioSamples, int nb_samples)
 	{
 		int ret = -1;
-		if (m_stRecordInfo.is_record_mic && m_bInited & m_bRun)
+		if (m_stRecordInfo.is_record_mic && m_bInited && m_bRun)
 		{
 			int64_t begin_time = timeGetTime();
 
@@ -706,7 +718,7 @@ namespace MediaFileRecorder
 		AVFrame* pMainFrame = NULL;
 		memset(m_pAudioBuffer, 0, m_nAudioSize);
 
-		if (m_stRecordInfo.is_record_speaker)
+		if (m_stRecordInfo.is_record_speaker && m_bSpeakerInited)
 		{
 			pMainFrame = m_pSpeakerRecorder->GetOneFrame();
 
@@ -714,7 +726,7 @@ namespace MediaFileRecorder
 				return;
 		}
 
-		if (m_stRecordInfo.is_record_mic)
+		if (m_stRecordInfo.is_record_mic && m_bMicInited)
 		{
 		    AVFrame* pMicFrame = m_pMicRecorder->GetOneFrame();
 			if (pMicFrame)
@@ -1146,6 +1158,18 @@ namespace MediaFileRecorder
 		}
 
 		return false;
+	}
+
+
+	IMediaFileRecorder* CreateMediaFileRecorder()
+	{
+		IMediaFileRecorder* pMediaFileRecorder = new CMediaFileRecorder();
+		return pMediaFileRecorder;
+	}
+
+	void DestroyMediaFileRecorder(IMediaFileRecorder* pMediaFileRecorder)
+	{
+		delete pMediaFileRecorder;
 	}
 }
 

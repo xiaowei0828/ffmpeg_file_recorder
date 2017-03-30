@@ -6,10 +6,6 @@
 #include "GdiGrabberTest.h"
 #include "GdiGrabberTestDlg.h"
 #include "afxdialogex.h"
-#include "CScreenGdiGrabber.h"
-#include "CScreenDXGrabber.h"
-#include "CWASAudioCapture.h"
-#include "CScreenDXGIGrabber.h"
 #include <MMSystem.h>
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -52,7 +48,10 @@ END_MESSAGE_MAP()
 
 
 CGdiGrabberTestDlg::CGdiGrabberTestDlg(CWnd* pParent /*=NULL*/)
-	: CDialogEx(CGdiGrabberTestDlg::IDD, pParent)
+	: CDialogEx(CGdiGrabberTestDlg::IDD, pParent),
+	screen_grabber_(NULL),
+	audio_capture_(NULL),
+	media_file_recorder_(NULL)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	record_started_ = false;
@@ -115,13 +114,11 @@ BOOL CGdiGrabberTestDlg::OnInitDialog()
 
 	// TODO:  在此添加额外的初始化代码
 	
-	
-	screen_grabber_.reset(new MediaFileRecorder::CScreenGdiGrabber());
-	//screen_grabber_.reset(new ScreenGrabber::CScreenDXGrabber());
-	audio_capture_.reset(new MediaFileRecorder::CWASAudioCapture());
-	audio_capture_->RegisterCaptureDataCb(this);
+	screen_grabber_ = MediaFileRecorder::CreateScreenGrabber();
+	audio_capture_ = MediaFileRecorder::CreateAudioCapture();
+	media_file_recorder_ = MediaFileRecorder::CreateMediaFileRecorder();
 
-	media_file_recorder_.reset(new MediaFileRecorder::CMediaFileRecorder());
+	audio_capture_->RegisterCaptureDataCb(this);
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -252,6 +249,12 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 void CGdiGrabberTestDlg::OnClose()
 {
 	// TODO:  在此添加消息处理程序代码和/或调用默认
+	MediaFileRecorder::DestroyScreenGrabber(screen_grabber_);
+	screen_grabber_ = NULL;
+	MediaFileRecorder::DestroyAudioCatpure(audio_capture_);
+	audio_capture_ = NULL;
+	MediaFileRecorder::DestroyMediaFileRecorder(media_file_recorder_);
+	media_file_recorder_ = NULL;
 	CDialogEx::OnClose();
 }
 

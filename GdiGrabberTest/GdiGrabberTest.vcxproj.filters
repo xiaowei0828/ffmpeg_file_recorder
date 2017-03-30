@@ -72,7 +72,7 @@
     <ClInclude Include="IMediaFileRecorder.h">
       <Filter>interface</Filter>
     </ClInclude>
-    <ClInclude Include="CScreenDXGIGrabber.h">
+    <ClInclude Include="CWAVEAudioCapture.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -107,7 +107,13 @@
     <ClCompile Include="base\system_info.cpp">
       <Filter>base</Filter>
     </ClCompile>
-    <ClCompile Include="CScreenDXGIGrabber.cpp">
+    <ClCompile Include="ScreenGrabberFactory.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="AudioCaptureFactory.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CWAVEAudioCapture.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -9,16 +9,12 @@ namespace MediaFileRecorder
 {
 	IScreenGrabber* CreateScreenGrabber()
 	{
-		SystemInfo systemInfo;
-		if (systemInfo.windows_version() >= SystemInfo::WINDOWS_8)
-		{
-			return NULL;
-		}
-		else
-		{
-			IScreenGrabber* pScreenGrabber = new CScreenGdiGrabber();
-			return pScreenGrabber;
-		}
+		IScreenGrabber* pScreenGrabber = new CScreenGdiGrabber();
+		return pScreenGrabber;
+	}
 
+	void DestroyScreenGrabber(IScreenGrabber* pScreenGrabber)
+	{
+		delete pScreenGrabber;
 	}
 }

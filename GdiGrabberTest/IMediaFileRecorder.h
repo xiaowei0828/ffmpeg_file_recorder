@@ -15,8 +15,11 @@ namespace MediaFileRecorder
 		virtual int FillVideo(const void* data) = 0;
 		virtual int FillMicAudio(const void* audioSamples, int nb_samples) = 0;
 		virtual int FillSpeakerAudio(const void* audioSamples, int nb_samples) = 0;
-	protected:
+
 		virtual ~IMediaFileRecorder() {};
 	};
+
+	IMediaFileRecorder* CreateMediaFileRecorder();
+	void DestroyMediaFileRecorder(IMediaFileRecorder* pMediaFileRecorder);
 }
 #endif

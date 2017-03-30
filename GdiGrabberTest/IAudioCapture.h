@@ -22,8 +22,8 @@ namespace MediaFileRecorder
 	public:
 		virtual int RegisterCaptureDataCb(IAudioCaptureDataCb* pDataCb) = 0;
 		virtual int UnRegisterCaptureDataCb(IAudioCaptureDataCb* pDataCb) = 0;
-		virtual int SetMic(const char* strUtf8MicID) = 0;
-		virtual int SetSpeaker(const char* strUtf8SpeakerID) = 0;
+		virtual int SetMic(int index) = 0;
+		virtual int SetSpeaker(int index) = 0;
 		virtual int InitMic() = 0;
 		virtual int UnInitMic() = 0;
 		virtual int InitSpeaker() = 0;
@@ -35,9 +35,11 @@ namespace MediaFileRecorder
 		virtual int StartCaptureSoundCard() = 0;
 		virtual int StopCaptureSoundCard() = 0;
 
-	protected:
 		virtual ~IAudioCapture(){};
 	};
+
+	IAudioCapture* CreateAudioCapture();
+	void DestroyAudioCatpure(IAudioCapture* pAudioCapture);
 }
 
 #endif

@@ -52,9 +52,9 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	CVideoStatic m_StaticPic;
-	std::shared_ptr<MediaFileRecorder::IScreenGrabber> screen_grabber_;
-	std::shared_ptr<MediaFileRecorder::IMediaFileRecorder> media_file_recorder_;
-	std::shared_ptr<MediaFileRecorder::IAudioCapture> audio_capture_;
+	MediaFileRecorder::IScreenGrabber* screen_grabber_;
+	MediaFileRecorder::IMediaFileRecorder* media_file_recorder_;
+	MediaFileRecorder::IAudioCapture* audio_capture_;
 
 	bool record_started_;
 	bool record_interrupt_;
