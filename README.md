@@ -1,1 +1,2 @@
 # ffmpeg_file_recorder
+一个基于ffmpeg的windows端录屏软件。支持Windows XP以上系统的屏幕录制和麦克风声音录制，支持Vista以上系统的系统声音录制。目前已经初步完成，还有些地方需要优化。
