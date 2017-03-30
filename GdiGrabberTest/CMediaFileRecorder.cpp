@@ -140,6 +140,7 @@ namespace MediaFileRecorder
 		m_pVideoCodecCtx->max_qdiff = 4;
 		m_pVideoCodecCtx->qmin = 0;
 		m_pVideoCodecCtx->qmax = 50;
+		m_pVideoCodecCtx->delay = 0;
 
 		m_pVideoCodecCtx->keyint_min = m_stRecordInfo.video_info.frame_rate;
 		m_pVideoCodecCtx->gop_size = m_stRecordInfo.video_info.frame_rate * 10;
@@ -158,7 +159,8 @@ namespace MediaFileRecorder
 			crf = "18";
 		}
 		AVDictionary *param = 0;
-		av_dict_set(&param, "preset", "veryfast", 0);
+		av_dict_set(&param, "preset", "ultrafast", 0);
+		av_dict_set(&param, "tune", "zerolatency", 0);
 		av_dict_set(&param, "crf", crf, 0);
 
 		AVCodec* pEncoder = avcodec_find_encoder(m_pVideoCodecCtx->codec_id);

@@ -41,18 +41,23 @@ namespace MediaFileRecorder
 		int StopCaptureSoundCard() override;
 
 	private:
-		static void CALLBACK  WaveCaptureProc(
-			HWAVEIN hwi,
-			UINT uMsg, 
+		void MicCaptureThreadProc();
+
+		/*static void CapturedDataCb(
+			HWAVEIN   hwi,
+			UINT      uMsg,
 			DWORD_PTR dwInstance,
 			DWORD_PTR dwParam1,
 			DWORD_PTR dwParam2);
-
-		void OnCapturedData(void* data, int nCapturedSize);
-
+			void OnCapturedData(WAVEHDR* pHeader);
+			void ReturnWaveBufferThreadProc();
+			std::vector<WAVEHDR*> m_vecReturnBuffer;
+			CRITICAL_SECTION m_sectionReturnBuffer;
+			HANDLE m_hReturnBufferEvent;*/
 	private:
 		std::atomic_bool m_bMicInited;
 		std::atomic_bool m_bCapturingMic;
+		std::atomic_bool m_bRunning;
 		std::vector<IAudioCaptureDataCb*> m_vecDataCb;
 		CRITICAL_SECTION m_sectionDataCb;
 		std::thread m_RecordThread;

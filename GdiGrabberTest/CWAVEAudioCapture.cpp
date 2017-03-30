@@ -7,10 +7,13 @@ namespace MediaFileRecorder
 		:m_nMicIndex(-1),
 		m_nSpeakerIndex(-1),
 		m_hWaveIn(NULL)
+		//m_hReturnBufferEvent(NULL)
 	{
 		m_bMicInited = false;
 		m_bCapturingMic = false;
+		m_bRunning = false;
 		InitializeCriticalSection(&m_sectionDataCb);
+		//InitializeCriticalSection(&m_sectionReturnBuffer);
 	}
 
 	CWAVEAudioCapture::~CWAVEAudioCapture()
@@ -89,7 +92,7 @@ namespace MediaFileRecorder
 			return -1;
 		}
 
-		res = waveInOpen(&hWaveIn, devID, &waveFormat, (DWORD_PTR)&CWAVEAudioCapture::WaveCaptureProc, (DWORD_PTR)this, CALLBACK_FUNCTION);
+		res = waveInOpen(&hWaveIn, devID, &waveFormat, NULL, NULL, CALLBACK_NULL);
 		if (res != MMSYSERR_NOERROR)
 		{
 			OutputDebugStringA("Open wave in handle failed \n");
@@ -132,6 +135,7 @@ namespace MediaFileRecorder
 			}
 			waveInClose(m_hWaveIn);
 			m_hWaveIn = NULL;
+			m_bMicInited = false;
 			return 0;
 		}
 		return -1;
@@ -207,6 +211,13 @@ namespace MediaFileRecorder
 			}
 		}
 
+		/*m_hReturnBufferEvent = CreateEvent(NULL, FALSE, FALSE, NULL);*/
+
+		m_bRunning = true;
+		m_RecordThread.swap(std::thread(std::bind(&CWAVEAudioCapture::MicCaptureThreadProc, this)));
+		SetThreadPriority(m_RecordThread.native_handle(), THREAD_PRIORITY_TIME_CRITICAL);
+		//m_RecordThread.swap(std::thread(std::bind(&CWAVEAudioCapture::ReturnWaveBufferThreadProc, this)));
+
 		res = waveInStart(m_hWaveIn);
 		if (res != MMSYSERR_NOERROR)
 		{
@@ -223,6 +234,16 @@ namespace MediaFileRecorder
 	{
 		if (m_bCapturingMic)
 		{
+			m_bRunning = false;
+			if (m_RecordThread.joinable())
+			{
+				m_RecordThread.join();
+			}
+			/*if (m_hReturnBufferEvent)
+			{
+			CloseHandle(m_hReturnBufferEvent);
+			m_hReturnBufferEvent = NULL;
+			}*/
 			waveInStop(m_hWaveIn);
 			waveInReset(m_hWaveIn);
 			for (int i = 0; i < N_BUFFERS_IN; i++)
@@ -245,30 +266,124 @@ namespace MediaFileRecorder
 		return -1;
 	}
 
-	void CALLBACK CWAVEAudioCapture::WaveCaptureProc(HWAVEIN hwi, UINT uMsg, 
-		DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
+	void CWAVEAudioCapture::MicCaptureThreadProc()
 	{
-		LPWAVEHDR waveHeader = (LPWAVEHDR)dwParam1;
-		if (WIM_DATA == uMsg)
+		HANDLE hWaitableTimer = CreateWaitableTimer(NULL, FALSE, NULL);
+		LARGE_INTEGER fireTime;
+		fireTime.QuadPart = -1;
+		SetWaitableTimer(hWaitableTimer, &fireTime, 10, NULL, NULL, FALSE);
+		int nBufferIndex = 0;
+		int nBytesPerSample = N_REC_CHANNELS * (N_REC_BITS_PER_SAMPLE / 8);
+		int nBufferTotalSize = nBytesPerSample * REC_BUF_SIZE_IN_SAMPLES;
+		while (true)
 		{
-			CWAVEAudioCapture* pThis = (CWAVEAudioCapture*)dwInstance;
-			if (pThis)
+			WaitForSingleObject(hWaitableTimer, INFINITE);
+			if (!m_bRunning)
+				break;
+
+			while (true)
 			{
-				pThis->OnCapturedData(waveHeader->lpData, waveHeader->dwBytesRecorded);
+				if (nBufferIndex == N_BUFFERS_IN)
+				{
+					nBufferIndex = 0;
+				}
+				int nCapturedSize = m_WaveHeaderIn[nBufferIndex].dwBytesRecorded;
+				if (nCapturedSize == nBufferTotalSize)
+				{
+					int nSamples = nCapturedSize / nBytesPerSample;
+					EnterCriticalSection(&m_sectionDataCb);
+					for (IAudioCaptureDataCb* pCb : m_vecDataCb)
+					{
+						pCb->OnCapturedMicData(m_WaveHeaderIn[nBufferIndex].lpData, nSamples);
+					}
+					LeaveCriticalSection(&m_sectionDataCb);
+
+					m_WaveHeaderIn[nBufferIndex].dwBytesRecorded = 0;
+
+					MMRESULT res = waveInUnprepareHeader(m_hWaveIn, &(m_WaveHeaderIn[nBufferIndex]), sizeof(WAVEHDR));
+					if (res != MMSYSERR_NOERROR)
+					{
+						OutputDebugStringA("waveInUnprepareHeader failed \n");
+						goto EXIT;
+					}
+
+					res = waveInPrepareHeader(m_hWaveIn, &m_WaveHeaderIn[nBufferIndex], sizeof(WAVEHDR));
+					if (res != MMSYSERR_NOERROR)
+					{
+						OutputDebugStringA("waveInPrepareHeader failed \n");
+						goto EXIT;
+					}
+					
+					res = waveInAddBuffer(m_hWaveIn, &m_WaveHeaderIn[nBufferIndex], sizeof(WAVEHDR));
+					if (res != MMSYSERR_NOERROR)
+					{
+						OutputDebugStringA("waveInAddBuffer failed \n");
+						goto EXIT;
+					}
+
+					nBufferIndex++;
+				}
+				else
+				{
+					break;
+				}
 			}
 		}
+	EXIT:
+		CloseHandle(hWaitableTimer);
+		return;
 	}
 
-	void CWAVEAudioCapture::OnCapturedData(void* data, int nCapturedSize)
-	{
-		uint32_t nBytesPerSample = N_REC_CHANNELS * (N_REC_BITS_PER_SAMPLE / 8);
-		uint32_t nSamplesRecorded = nCapturedSize / nBytesPerSample;
 
-		EnterCriticalSection(&m_sectionDataCb);
-		for (auto iter : m_vecDataCb)
+	/*void CWAVEAudioCapture::CapturedDataCb(HWAVEIN hwi, UINT uMsg,
+		DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 		{
-			iter->OnCapturedMicData(data, nSamplesRecorded);
+		if (uMsg == WIM_DATA)
+		{
+		WAVEHDR* pWaveHeader = (WAVEHDR*)dwParam1;
+		CWAVEAudioCapture* pThis = (CWAVEAudioCapture*)dwInstance;
+		if (pWaveHeader && pThis)
+		{
+		pThis->OnCapturedData(pWaveHeader);
 		}
-		LeaveCriticalSection(&m_sectionDataCb);
+		}
+		}*/
+
+
+	/*void CWAVEAudioCapture::OnCapturedData(WAVEHDR* pHeader)
+	{
+	int nBytesPerSample = N_REC_CHANNELS * (N_REC_BITS_PER_SAMPLE / 8);
+	int nSamples = pHeader->dwBytesRecorded / nBytesPerSample;
+	EnterCriticalSection(&m_sectionDataCb);
+	for (IAudioCaptureDataCb* pDataCb : m_vecDataCb)
+	{
+	pDataCb->OnCapturedMicData(pHeader->lpData, nSamples);
 	}
+	LeaveCriticalSection(&m_sectionDataCb);
+
+	EnterCriticalSection(&m_sectionReturnBuffer);
+	m_vecReturnBuffer.push_back(pHeader);
+	LeaveCriticalSection(&m_sectionReturnBuffer);
+	SetEvent(m_hReturnBufferEvent);
+	}
+
+	void CWAVEAudioCapture::ReturnWaveBufferThreadProc()
+	{
+	while (m_bRunning)
+	{
+	DWORD result = WaitForSingleObject(m_hReturnBufferEvent, 100);
+	if (result == WAIT_OBJECT_0)
+	{
+	EnterCriticalSection(&m_sectionReturnBuffer);
+	for (WAVEHDR* pHeader : m_vecReturnBuffer)
+	{
+	pHeader->dwBytesRecorded = 0;
+	waveInAddBuffer(m_hWaveIn, pHeader, sizeof(WAVEHDR));
+	}
+	m_vecReturnBuffer.clear();
+	LeaveCriticalSection(&m_sectionReturnBuffer);
+	}
+	}
+	}*/
+
 }
