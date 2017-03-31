@@ -19,7 +19,7 @@ namespace MediaFileRecorder
 		int RegisterDataCb(IScreenGrabberDataCb* cb) override;
 		int UnRegisterDataCb(IScreenGrabberDataCb* cb) override;
 
-		int SetGrabRect(int left, int top, int right, int bottom) override;
+		int SetGrabRect(const RECT& rect) override;
 		int SetGrabFrameRate(int frame_rate) override;
 
 		int StartGrab() override;
@@ -35,6 +35,7 @@ namespace MediaFileRecorder
 
 	private:
 		std::vector<IScreenGrabberDataCb*> vec_data_cb_;
+		VIDEO_INFO video_info_;
 		int screen_width_;
 		int screen_height_;
 		RECT grab_rect_;

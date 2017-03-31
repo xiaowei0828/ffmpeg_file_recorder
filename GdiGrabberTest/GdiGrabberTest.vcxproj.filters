@@ -57,9 +57,6 @@
     <ClInclude Include="CWASAudioCapture.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="MediaRecordTypeDef.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="base\system_info.h">
       <Filter>base</Filter>
     </ClInclude>
@@ -73,6 +70,15 @@
       <Filter>interface</Filter>
     </ClInclude>
     <ClInclude Include="CWAVEAudioCapture.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="IScreeAudioRecord.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="MediaRecordTypeDef.h">
+      <Filter>interface</Filter>
+    </ClInclude>
+    <ClInclude Include="CScreenAudioRecord.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -114,6 +120,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CWAVEAudioCapture.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CScreenAudioRecord.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

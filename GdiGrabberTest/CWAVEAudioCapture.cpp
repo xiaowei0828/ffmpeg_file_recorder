@@ -18,13 +18,9 @@ namespace MediaFileRecorder
 
 	CWAVEAudioCapture::~CWAVEAudioCapture()
 	{
-		if (m_bMicInited)
+		if (m_bCapturingMic)
 		{
-			if (m_bCapturingMic)
-			{
-				StopCaptureMic();
-			}
-			UnInitMic();
+			StopCaptureMic();
 		}
 	}
 
@@ -66,6 +62,63 @@ namespace MediaFileRecorder
 		return 0;
 	}
 
+	int CWAVEAudioCapture::StartCaptureMic()
+	{
+		if (m_bCapturingMic)
+		{
+			OutputDebugStringA("Already running \n");
+			return -1;
+		}
+
+		int ret = InitMic();
+		if (ret != 0)
+		{
+			OutputDebugStringA("InitMic failed \n");
+			return -1;
+		}
+
+		/*m_hReturnBufferEvent = CreateEvent(NULL, FALSE, FALSE, NULL);*/
+		//m_RecordThread.swap(std::thread(std::bind(&CWAVEAudioCapture::ReturnWaveBufferThreadProc, this)));
+
+		MMRESULT res = waveInStart(m_hWaveIn);
+		if (res != MMSYSERR_NOERROR)
+		{
+			OutputDebugStringA("waveInStart failed \n");
+			return -1;
+		}
+
+		StartCaptureMicThread();
+
+		m_bCapturingMic = true;
+
+		return 0;
+	}
+
+	int CWAVEAudioCapture::StopCaptureMic()
+	{
+		if (m_bCapturingMic)
+		{
+			StopCaptureMicThread();
+			waveInStop(m_hWaveIn);
+			waveInReset(m_hWaveIn);
+			m_bCapturingMic = false;
+
+			UnInitMic();
+			return 0;
+		}
+		return -1;
+	}
+
+	int CWAVEAudioCapture::StartCaptureSoundCard()
+	{
+		return -1;
+	}
+
+	int CWAVEAudioCapture::StopCaptureSoundCard()
+	{
+		return -1;
+	}
+
 	int CWAVEAudioCapture::InitMic()
 	{
 		if (m_bMicInited)
@@ -89,6 +142,7 @@ namespace MediaFileRecorder
 		if (res != MMSYSERR_NOERROR)
 		{
 			OutputDebugStringA("waveInOpen failed for query format \n");
+			CleanUpMic();
 			return -1;
 		}
 
@@ -96,6 +150,7 @@ namespace MediaFileRecorder
 		if (res != MMSYSERR_NOERROR)
 		{
 			OutputDebugStringA("Open wave in handle failed \n");
+			CleanUpMic();
 			return -1;
 		}
 
@@ -106,9 +161,10 @@ namespace MediaFileRecorder
 		else
 		{
 			OutputDebugStringA("Unsupported bits per sample \n");
+			CleanUpMic();
 			return -1;
 		}
-		
+
 		m_MicAudioInfo.sample_rate = N_REC_SAMPLES_PER_SEC;
 		if (waveFormat.nChannels == 1)
 			m_MicAudioInfo.chl_layout = SPEAKERS_MONO;
@@ -117,70 +173,12 @@ namespace MediaFileRecorder
 		else
 		{
 			OutputDebugStringA("Unsupported channels number \n");
+			CleanUpMic();
 			return -1;
 		}
+
 		m_hWaveIn = hWaveIn;
 
-		m_bMicInited = true;
-		return 0;
-	}
-
-	int CWAVEAudioCapture::UnInitMic()
-	{
-		if (m_bMicInited)
-		{
-			if (m_bCapturingMic)
-			{
-				StopCaptureMic();
-			}
-			waveInClose(m_hWaveIn);
-			m_hWaveIn = NULL;
-			m_bMicInited = false;
-			return 0;
-		}
-		return -1;
-	}
-
-	int CWAVEAudioCapture::InitSpeaker()
-	{
-		return -1;
-	}
-
-	int CWAVEAudioCapture::UnInitSpeaker()
-	{
-		return -1;
-	}
-
-	int CWAVEAudioCapture::GetMicAudioInfo(AUDIO_INFO& audioInfo)
-	{
-		if (m_bMicInited)
-		{
-			audioInfo = m_MicAudioInfo;
-			return 0;
-		}
-		return -1;
-	}
-
-	int CWAVEAudioCapture::GetSoundCardAudioInfo(AUDIO_INFO& audioInfo)
-	{
-		return -1;
-	}
-
-	int CWAVEAudioCapture::StartCaptureMic()
-	{
-		if (!m_bMicInited)
-		{
-			OutputDebugStringA("Not inited \n");
-			return -1;
-		}
-
-		if (m_bCapturingMic)
-		{
-			OutputDebugStringA("Already running \n");
-			return -1;
-		}
-
-		MMRESULT res = MMSYSERR_NOERROR;
 		for (int n = 0; n < N_BUFFERS_IN; n++)
 		{
 			uint8_t nBytesPerSample = N_REC_CHANNELS * (N_REC_BITS_PER_SAMPLE / 8);
@@ -200,6 +198,7 @@ namespace MediaFileRecorder
 			if (res != MMSYSERR_NOERROR)
 			{
 				OutputDebugStringA("waveInPrepareHeader failed \n");
+				CleanUpMic();
 				return -1;
 			}
 
@@ -207,62 +206,73 @@ namespace MediaFileRecorder
 			if (res != MMSYSERR_NOERROR)
 			{
 				OutputDebugStringA("waveInAddBuffer failed \n");
+				CleanUpMic();
 				return -1;
 			}
 		}
 
-		/*m_hReturnBufferEvent = CreateEvent(NULL, FALSE, FALSE, NULL);*/
-
-		m_bRunning = true;
-		m_RecordThread.swap(std::thread(std::bind(&CWAVEAudioCapture::MicCaptureThreadProc, this)));
-		SetThreadPriority(m_RecordThread.native_handle(), THREAD_PRIORITY_TIME_CRITICAL);
-		//m_RecordThread.swap(std::thread(std::bind(&CWAVEAudioCapture::ReturnWaveBufferThreadProc, this)));
-
-		res = waveInStart(m_hWaveIn);
-		if (res != MMSYSERR_NOERROR)
-		{
-			OutputDebugStringA("waveInStart failed \n");
-			return -1;
-		}
-
-		m_bCapturingMic = true;
+		m_bMicInited = true;
 		return 0;
-
 	}
 
-	int CWAVEAudioCapture::StopCaptureMic()
+	int CWAVEAudioCapture::UnInitMic()
 	{
-		if (m_bCapturingMic)
+		if (m_bMicInited)
+		{
+			CleanUpMic();
+			m_bMicInited = false;
+			return 0;
+		}
+		return -1;
+	}
+
+
+	void CWAVEAudioCapture::CleanUpMic()
+	{
+		if (m_hWaveIn)
+		{
+			for (int i = 0; i < N_BUFFERS_IN; i++)
+			{
+				waveInUnprepareHeader(m_hWaveIn, &m_WaveHeaderIn[i], sizeof(WAVEHDR));
+			}
+			waveInClose(m_hWaveIn);
+			m_hWaveIn = NULL;
+		}
+	}
+
+	int CWAVEAudioCapture::InitSpeaker()
+	{
+		return -1;
+	}
+
+	int CWAVEAudioCapture::UnInitSpeaker()
+	{
+		return -1;
+	}
+
+	int CWAVEAudioCapture::StartCaptureMicThread()
+	{
+		if (!m_bRunning)
+		{
+			m_bRunning = true;
+			m_RecordThread.swap(std::thread(std::bind(&CWAVEAudioCapture::MicCaptureThreadProc, this)));
+			SetThreadPriority(m_RecordThread.native_handle(), THREAD_PRIORITY_TIME_CRITICAL);
+			return 0;
+		}
+		return -1;
+	}
+
+	int CWAVEAudioCapture::StopCaptureMicThread()
+	{
+		if (m_bRunning)
 		{
 			m_bRunning = false;
 			if (m_RecordThread.joinable())
 			{
 				m_RecordThread.join();
 			}
-			/*if (m_hReturnBufferEvent)
-			{
-			CloseHandle(m_hReturnBufferEvent);
-			m_hReturnBufferEvent = NULL;
-			}*/
-			waveInStop(m_hWaveIn);
-			waveInReset(m_hWaveIn);
-			for (int i = 0; i < N_BUFFERS_IN; i++)
-			{
-				waveInUnprepareHeader(m_hWaveIn, &m_WaveHeaderIn[i], sizeof(WAVEHDR));
-			}
-			m_bCapturingMic = false;
 			return 0;
 		}
-		return -1;
-	}
-
-	int CWAVEAudioCapture::StartCaptureSoundCard()
-	{
-		return -1;
-	}
-
-	int CWAVEAudioCapture::StopCaptureSoundCard()
-	{
 		return -1;
 	}
 
@@ -294,7 +304,7 @@ namespace MediaFileRecorder
 					EnterCriticalSection(&m_sectionDataCb);
 					for (IAudioCaptureDataCb* pCb : m_vecDataCb)
 					{
-						pCb->OnCapturedMicData(m_WaveHeaderIn[nBufferIndex].lpData, nSamples);
+						pCb->OnCapturedMicData(m_WaveHeaderIn[nBufferIndex].lpData, nSamples, m_MicAudioInfo);
 					}
 					LeaveCriticalSection(&m_sectionDataCb);
 

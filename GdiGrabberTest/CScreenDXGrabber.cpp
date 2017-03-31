@@ -46,14 +46,11 @@ namespace MediaFileRecorder
 		return -1;
 	}
 
-	int CScreenDXGrabber::SetGrabRect(int left, int top, int right, int bottom)
+	int CScreenDXGrabber::SetGrabRect(const RECT& rect)
 	{
 		if (!started_)
 		{
-			grab_rect_.left = left;
-			grab_rect_.top = top;
-			grab_rect_.right = right;
-			grab_rect_.bottom = bottom;
+			grab_rect_ = rect;
 			return 0;
 		}
 		return -1;
@@ -146,6 +143,10 @@ namespace MediaFileRecorder
 			return false;
 		}
 
+		video_info_.width = grab_rect_.right - grab_rect_.left;
+		video_info_.height = grab_rect_.bottom - grab_rect_.top;
+		video_info_.pix_fmt = PIX_FMT_BGRA;
+
 		return true;
 
 	}
@@ -192,11 +193,11 @@ namespace MediaFileRecorder
 			int64_t begin_time = timeGetTime();
 			d3d_dev_ptr_->GetFrontBufferData(0, d3d_surface_ptr_);
 			D3DLOCKED_RECT lockedRect;
-			d3d_surface_ptr_->LockRect(&lockedRect,  &grab_rect_, D3DLOCK_NO_DIRTY_UPDATE | D3DLOCK_NOSYSLOCK | D3DLOCK_READONLY);
+			::RECT rect = { grab_rect_.left, grab_rect_.top, grab_rect_.right, grab_rect_.bottom };
+			d3d_surface_ptr_->LockRect(&lockedRect,  &rect, D3DLOCK_NO_DIRTY_UPDATE | D3DLOCK_NOSYSLOCK | D3DLOCK_READONLY);
 			for (IScreenGrabberDataCb* cb : vec_data_cb_)
 			{
-				cb->OnScreenData(lockedRect.pBits, grab_rect_.right - grab_rect_.left, 
-					grab_rect_.bottom - grab_rect_.top, PIX_FMT::PIX_FMT_BGRA);
+				cb->OnScreenData(lockedRect.pBits, video_info_);
 			}
 			d3d_surface_ptr_->UnlockRect();
 

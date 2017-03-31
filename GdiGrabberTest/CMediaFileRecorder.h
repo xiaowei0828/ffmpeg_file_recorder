@@ -37,7 +37,8 @@ extern "C"
 
 namespace MediaFileRecorder
 {
-	class CAudioRecordBuffer;
+	class CVideoRecord;
+	class CAudioRecord;
 
 	class CMediaFileRecorder : public IMediaFileRecorder
 	{
@@ -48,9 +49,9 @@ namespace MediaFileRecorder
 		int UnInit() override;
 		int Start() override;
 		int Stop() override;
-		int FillVideo(const void* data) override;
-		int FillMicAudio(const void* audioSamples, int nb_samples) override;
-		int FillSpeakerAudio(const void* audioSamples, int nb_samples) override;
+		int FillVideo(const void* data, const VIDEO_INFO& video_info) override;
+		int FillMicAudio(const void* audioSamples, int nb_samples, const AUDIO_INFO& audio_info) override;
+		int FillSpeakerAudio(const void* audioSamples, int nb_samples, const AUDIO_INFO& audio_info) override;
 
 	private:
 		int InitVideoRecord();
@@ -80,55 +81,40 @@ namespace MediaFileRecorder
 		AVCodecContext* m_pAudioCodecCtx;
 		AVPacket* m_pVideoPacket;
 		AVPacket* m_pAudioPacket;
-		int m_nPicSize;
-		AVFrame* m_pOutVideoFrame;
-		uint8_t* m_pOutPicBuffer;
-		AVFrame* m_pInVideoFrame;
-		uint8_t* m_pInPicBuffer;
 
-		AVFrame* m_pAudioFrame;
-		uint8_t* m_pAudioBuffer;
-		uint32_t m_nAudioSize;
-
-		SwsContext* m_pVideoConvertCtx;
-
-		AVFifoBuffer* m_pVideoFifoBuffer;
-
-		CRITICAL_SECTION m_VideoSection;
-
-		int64_t m_nVideoFrameIndex;
-		int64_t m_nAudioFrameIndex;
-
-		std::thread m_WriteVideoThread;
-		std::thread m_WriteAudioThread;
-
-		int64_t m_nVideoWriteFrames;
-		int64_t m_nVideoDiscardFrames;
+		uint32_t m_nVideoStreamIndex;
+		uint32_t m_nAudioStreamIndex;
 
 		int64_t m_nStartTime;
 		int64_t m_nDuration;
 
+		int64_t m_nVideoPacketIndex;
+		int64_t m_nAudioPacketIndex;
+
+		std::shared_ptr<CVideoRecord> m_pVideoRecorder;
+		std::shared_ptr<CAudioRecord> m_pMicRecorder;
+		std::shared_ptr<CAudioRecord> m_pSpeakerRecorder;
+
+		std::thread m_WriteVideoThread;
+		std::thread m_WriteAudioThread;
+
 		CRITICAL_SECTION m_WriteFileSection;
 
-		std::shared_ptr<CAudioRecordBuffer> m_pMicRecorder;
-		std::shared_ptr<CAudioRecordBuffer> m_pSpeakerRecorder;
-		uint32_t m_nVideoStreamIndex;
-		uint32_t m_nAudioStreamIndex;
-
-		bool m_bSpeakerInited;
-		bool m_bMicInited;
+		int m_nMainAudioStream;
 	};
 
-	class CAudioRecordBuffer
+	class CAudioRecord
 	{
 	public:
-		CAudioRecordBuffer();
-		~CAudioRecordBuffer();
-		int Init(const AVCodecContext* pCodecCtx, const AUDIO_INFO& src_audio_info);
+		CAudioRecord();
+		~CAudioRecord();
+		int Init(const AVCodecContext* pCodecCtx);
 		int UnInit();
-		void CleanUp();
-		int FillAudio(const void* audioSamples, int nb_samples);
+		int FillAudio(const void* audioSamples, int nb_samples, const AUDIO_INFO& audio_info);
 		AVFrame* GetOneFrame();
+	private:
+		int ResetConvertCtx();
+		void CleanUp();
 	private:
 		std::atomic_bool m_bInited;
 		const AVCodecContext* m_pCodecCtx;
@@ -142,6 +128,41 @@ namespace MediaFileRecorder
 		CRITICAL_SECTION m_BufferSection;
 		int64_t m_nSavedAudioSamples;
 		int64_t m_nDiscardAudioSamples;
+	};
+
+	struct VIDEO_FRAME
+	{
+		int64_t nCaptureTime;
+		AVFrame* pAvFrame;
+	};
+	class CVideoRecord
+	{
+	public:
+		CVideoRecord();
+		~CVideoRecord();
+		int Init(const AVCodecContext* pCodecCtx);
+		int UnInit();
+		int FillVideo(const void* video_data, const VIDEO_INFO& video_info, int64_t capture_time);
+		VIDEO_FRAME* GetOneFrame();
+	private:
+		int ResetConvertCtx();
+		void CheckBufferSpace();
+		void CleanUp();
+	private:
+		std::atomic_bool m_bInited;
+		const AVCodecContext* m_pCodecCtx;
+		VIDEO_INFO m_stVideoInfo;
+		SwsContext* m_pConvertCtx;
+		AVFrame* m_pOutVideoFrame;
+		uint8_t* m_pOutPicBuffer;
+		AVFrame* m_pInVideoFrame;
+		uint8_t* m_pInPicBuffer;
+		VIDEO_FRAME m_VideoFrame;
+		int m_nPicSize;
+		AVFifoBuffer* m_pFifoBuffer;
+		CRITICAL_SECTION m_BufferSection;
+		int64_t m_nSavedFrames;
+		int64_t m_nDiscardFrames;
 	};
 
 

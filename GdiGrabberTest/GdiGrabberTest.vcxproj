@@ -109,6 +109,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="base\system_info.h" />
+    <ClInclude Include="CScreenAudioRecord.h" />
     <ClInclude Include="CScreenDXGrabber.h" />
     <ClInclude Include="CWASAudioCapture.h" />
     <ClInclude Include="CWAVEAudioCapture.h" />
@@ -117,6 +118,7 @@
     <ClInclude Include="GdiGrabberTestDlg.h" />
     <ClInclude Include="IAudioCapture.h" />
     <ClInclude Include="IMediaFileRecorder.h" />
+    <ClInclude Include="IScreeAudioRecord.h" />
     <ClInclude Include="IScreenGrabber.h" />
     <ClInclude Include="CMediaFileRecorder.h" />
     <ClInclude Include="MediaRecordTypeDef.h" />
@@ -132,6 +134,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="CScreenAudioRecord.cpp" />
     <ClCompile Include="CScreenDXGrabber.cpp" />
     <ClCompile Include="CWASAudioCapture.cpp" />
     <ClCompile Include="CWAVEAudioCapture.cpp" />

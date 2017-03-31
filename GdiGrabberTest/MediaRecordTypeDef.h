@@ -44,21 +44,34 @@ namespace MediaFileRecorder
 
 	enum VIDEO_QUALITY
 	{
-		NORMAL = 0,
+		UNKOWN = 0,
+		NORMAL,
 		HIGH,
 		VERY_HIGH
 	};
 
+	enum RECORD_START_RESULT
+	{
+		STATE_NOT_RIGHT = 0x1,
+		PARAMETER_INVALID = 0x2,
+		START_SCRREEN_CAPTURE_FAILED = 0x4,
+		START_MIC_CAPTURE_FAILED = 0x8,
+		START_SPEAKER_CAPTURE_FAILED = 0x10,
+		INIT_MEDIA_FILE_RECORDER_FAILED = 0x20,
+		START_MEDIA_FILE_RECORDER_FAILED = 0x40
+	};
+
 	struct VIDEO_INFO
 	{
-		int src_width;
-		int src_height;
-		PIX_FMT src_pix_fmt;
-		int dst_width;
-		int dst_height;
-		int frame_rate;
-		VIDEO_QUALITY quality;
+		int width;
+		int height;
+		PIX_FMT pix_fmt;
 		VIDEO_INFO()
+		{
+			Reset();
+		}
+
+		void Reset()
 		{
 			memset(this, 0, sizeof(VIDEO_INFO));
 		}
@@ -71,7 +84,32 @@ namespace MediaFileRecorder
 		CHANNEL_LAYOUT chl_layout;
 		AUDIO_INFO()
 		{
+			Reset();
+		}
+
+		void Reset()
+		{
 			memset(this, 0, sizeof(AUDIO_INFO));
+		}
+	};
+
+	struct RECT
+	{
+		int left;
+		int right;
+		int top;
+		int bottom;
+		RECT()
+		{
+			left = right = top = bottom = 0;
+		}
+		int Width() const
+		{
+			return right - left;
+		}
+		int Height() const
+		{
+			return bottom - top;
 		}
 	};
 
@@ -81,17 +119,22 @@ namespace MediaFileRecorder
 		bool is_record_video;
 		bool is_record_mic;
 		bool is_record_speaker;
-		VIDEO_INFO video_info;
-		AUDIO_INFO mic_audio_info;
-		AUDIO_INFO speaker_audio_info;
+		RECT video_capture_rect;
+		int  video_dst_width;
+		int  video_dst_height;
+		int  video_frame_rate;
+		VIDEO_QUALITY quality;
 		RECORD_INFO()
 		{
 			memset(file_name, 0, 1024);
 			is_record_video = false;
 			is_record_mic = false;
 			is_record_speaker = false;
+
+			video_dst_width = 0;
+			video_dst_height = 0;
+			quality = UNKOWN;
 		}
 	};
-
 }
 #endif

@@ -19,28 +19,18 @@ namespace MediaFileRecorder
 		m_pFormatCtx(NULL),
 		m_pVideoCodecCtx(NULL),
 		m_pAudioCodecCtx(NULL),
-		m_pOutVideoFrame(NULL),
-		m_pOutPicBuffer(NULL),
-		m_pInVideoFrame(NULL),
-		m_pInPicBuffer(NULL),
-		m_nPicSize(0),
-		m_pVideoFifoBuffer(NULL),
-		m_nVideoFrameIndex(0),
-		m_nAudioFrameIndex(0),
-		m_pVideoConvertCtx(NULL),
-		m_nStartTime(0),
-		m_nDuration(0),
-		m_nVideoWriteFrames(0),
-		m_nVideoDiscardFrames(0),
-		m_pMicRecorder(new CAudioRecordBuffer()),
-		m_pSpeakerRecorder(new CAudioRecordBuffer()),
 		m_pVideoPacket(NULL),
 		m_pAudioPacket(NULL),
-		m_pAudioFrame(NULL),
-		m_pAudioBuffer(NULL),
-		m_nAudioSize(0),
 		m_nVideoStreamIndex(0),
-		m_nAudioStreamIndex(0)
+		m_nAudioStreamIndex(0),
+		m_nStartTime(0),
+		m_nDuration(0),
+		m_nVideoPacketIndex(0),
+		m_nAudioPacketIndex(0),
+		m_pVideoRecorder(new CVideoRecord()),
+		m_pMicRecorder(new CAudioRecord()),
+		m_pSpeakerRecorder(new CAudioRecord()),
+		m_nMainAudioStream(0)
 	{
 		m_bRun = false;
 		av_log_set_callback(av_log_cb);
@@ -114,7 +104,6 @@ namespace MediaFileRecorder
 
 	int CMediaFileRecorder::InitVideoRecord()
 	{
-		VIDEO_INFO& video_info = m_stRecordInfo.video_info;
 
 		AVStream* pVideoStream = avformat_new_stream(m_pFormatCtx, NULL);
 		if (pVideoStream == NULL)
@@ -129,11 +118,11 @@ namespace MediaFileRecorder
 		m_pVideoCodecCtx->codec_id = AV_CODEC_ID_H264;
 		m_pVideoCodecCtx->codec_type = AVMEDIA_TYPE_VIDEO;
 		m_pVideoCodecCtx->pix_fmt = AV_PIX_FMT_YUV420P;
-		m_pVideoCodecCtx->width = m_stRecordInfo.video_info.dst_width;
-		m_pVideoCodecCtx->height = m_stRecordInfo.video_info.dst_height;
+		m_pVideoCodecCtx->width = m_stRecordInfo.video_dst_width;
+		m_pVideoCodecCtx->height = m_stRecordInfo.video_dst_height;
 
 		m_pVideoCodecCtx->time_base.num = 1;
-		m_pVideoCodecCtx->time_base.den = m_stRecordInfo.video_info.frame_rate;
+		m_pVideoCodecCtx->time_base.den = m_stRecordInfo.video_frame_rate;
 		m_pVideoCodecCtx->thread_count = 5;
 
 		m_pVideoCodecCtx->qcompress = 0.6;
@@ -142,24 +131,24 @@ namespace MediaFileRecorder
 		m_pVideoCodecCtx->qmax = 50;
 		m_pVideoCodecCtx->delay = 0;
 
-		m_pVideoCodecCtx->keyint_min = m_stRecordInfo.video_info.frame_rate;
-		m_pVideoCodecCtx->gop_size = m_stRecordInfo.video_info.frame_rate * 10;
+		m_pVideoCodecCtx->keyint_min = m_stRecordInfo.video_frame_rate;
+		m_pVideoCodecCtx->gop_size = m_stRecordInfo.video_frame_rate * 10;
 
 		const char* crf = "23";
-		if (video_info.quality == NORMAL)
+		if (m_stRecordInfo.quality == NORMAL)
 		{
 			crf = "28";
 		}
-		else if (video_info.quality == HIGH)
+		else if (m_stRecordInfo.quality == HIGH)
 		{
 			crf = "23";
 		}
-		else if (video_info.quality == VERY_HIGH)
+		else if (m_stRecordInfo.quality == VERY_HIGH)
 		{
 			crf = "18";
 		}
 		AVDictionary *param = 0;
-		av_dict_set(&param, "preset", "ultrafast", 0);
+		av_dict_set(&param, "preset", "veryfast", 0);
 		av_dict_set(&param, "tune", "zerolatency", 0);
 		av_dict_set(&param, "crf", crf, 0);
 
@@ -184,56 +173,26 @@ namespace MediaFileRecorder
 			return -1;
 		}
 
-		m_nPicSize = avpicture_get_size(m_pVideoCodecCtx->pix_fmt, m_pVideoCodecCtx->width, m_pVideoCodecCtx->height);
-		m_pOutVideoFrame = av_frame_alloc();
-		m_pOutPicBuffer = (uint8_t*)av_malloc(m_nPicSize);
-		avpicture_fill((AVPicture*)m_pOutVideoFrame, m_pOutPicBuffer, m_pVideoCodecCtx->pix_fmt,
-			m_pVideoCodecCtx->width, m_pVideoCodecCtx->height);
-
-		m_pInVideoFrame = av_frame_alloc();
-		m_pInPicBuffer = (uint8_t*)av_malloc(m_nPicSize);
-		avpicture_fill((AVPicture*)m_pInVideoFrame, m_pInPicBuffer, m_pVideoCodecCtx->pix_fmt,
-			m_pVideoCodecCtx->width, m_pVideoCodecCtx->height);
-
+		int nPicSize = avpicture_get_size(m_pVideoCodecCtx->pix_fmt, m_pVideoCodecCtx->width, m_pVideoCodecCtx->height);
 		m_pVideoPacket = new AVPacket();
-		av_new_packet(m_pVideoPacket, m_nPicSize);
+		av_new_packet(m_pVideoPacket, nPicSize);
 
-		// Init swscontext
-		AVPixelFormat av_pix_fmt;
-		if (!ConvertToAVPixelFormat(video_info.src_pix_fmt, av_pix_fmt))
+		ret = m_pVideoRecorder->Init(m_pVideoCodecCtx);
+		if (ret != 0)
 		{
-			OutputDebugStringA("InitVideoRecord: convert to av pixel format failed \n");
-			VideoCleanUp();
+			OutputDebugStringA("Failed to init video recorde \n");
 			return -1;
 		}
-		
-		m_pVideoConvertCtx = sws_getContext(
-			video_info.src_width, video_info.src_height, 
-			av_pix_fmt, video_info.dst_width, 
-			video_info.dst_height, AV_PIX_FMT_YUV420P,
-			NULL, NULL,
-			NULL, NULL);
-		if (!m_pVideoConvertCtx)
-		{
-			OutputDebugStringA("InitVideo: get convert context failed \n");
-			VideoCleanUp();
-			return -1;
-		}
-
-		//申请30帧缓存
-		m_pVideoFifoBuffer = av_fifo_alloc(30 * m_nPicSize);
-
-		InitializeCriticalSection(&m_VideoSection);
-
 		return 0;	
 
 	}
 
 	void CMediaFileRecorder::UnInitVideoRecord()
 	{
+		m_pVideoRecorder->UnInit();
+
 		char log[128] = { 0 };
-		_snprintf_s(log, 128, "Write video count: %lld, Discard frame count: %lld \n",
-			m_nVideoWriteFrames, m_nVideoDiscardFrames);
+		_snprintf_s(log, 128, "Write video packet count: %lld \n", m_nVideoPacketIndex);
 		OutputDebugStringA(log);
 
 		VideoCleanUp();
@@ -253,40 +212,7 @@ namespace MediaFileRecorder
 			avcodec_close(m_pVideoCodecCtx);
 			m_pVideoCodecCtx = NULL;
 		}
-		if (m_pOutVideoFrame)
-		{
-			av_free(m_pOutVideoFrame);
-			m_pOutVideoFrame = NULL;
-		}
-		if (m_pOutPicBuffer)
-		{
-			av_free(m_pOutPicBuffer);
-			m_pOutPicBuffer = NULL;
-		}
-		if (m_pInVideoFrame)
-		{
-			av_free(m_pInVideoFrame);
-			m_pInVideoFrame = NULL;
-		}
-		if (m_pInPicBuffer)
-		{
-			av_free(m_pInPicBuffer);
-			m_pInPicBuffer = NULL;
-		}
-		if (m_pVideoFifoBuffer)
-		{
-			av_fifo_free(m_pVideoFifoBuffer);
-			m_pVideoFifoBuffer = NULL;
-		}
-		if (m_pVideoConvertCtx)
-		{
-			sws_freeContext(m_pVideoConvertCtx);
-			m_pVideoConvertCtx = NULL;
-		}
-		m_nPicSize = 0;
-		m_nVideoFrameIndex = 0;
-		m_nVideoWriteFrames = 0;
-		m_nVideoDiscardFrames = 0;
+		m_nVideoPacketIndex = 0;
 	}
 
 	
@@ -331,45 +257,25 @@ namespace MediaFileRecorder
 			return -1;
 		}
 
-		m_pAudioFrame = av_frame_alloc();
-		m_pAudioFrame->nb_samples = m_pAudioCodecCtx->frame_size;
-		m_pAudioFrame->format = m_pAudioCodecCtx->sample_fmt;
-
-		 m_nAudioSize = av_samples_get_buffer_size(NULL, m_pAudioCodecCtx->channels,
+		int nAudioSize = av_samples_get_buffer_size(NULL, m_pAudioCodecCtx->channels,
 			m_pAudioCodecCtx->frame_size, m_pAudioCodecCtx->sample_fmt, 1);
-		 m_pAudioBuffer = (uint8_t *)av_malloc(m_nAudioSize);
-		avcodec_fill_audio_frame(m_pAudioFrame, m_pAudioCodecCtx->channels,
-			m_pAudioCodecCtx->sample_fmt, (const uint8_t*)m_pAudioBuffer, m_nAudioSize, 1);
 
 		m_pAudioPacket = new AVPacket();
-		av_new_packet(m_pAudioPacket, m_nAudioSize);
+		av_new_packet(m_pAudioPacket, nAudioSize);
 
 		if (m_stRecordInfo.is_record_mic)
 		{
-			if (m_pMicRecorder->Init(m_pAudioCodecCtx, m_stRecordInfo.mic_audio_info) != 0)
+			if (m_pMicRecorder->Init(m_pAudioCodecCtx) != 0)
 			{
 				OutputDebugStringA("failed to init mic recorder \n");
-				m_bMicInited == false;
 			}
-			else
-			{
-				OutputDebugStringA("init mic recorder succeed \n");
-				m_bMicInited = true;
-			}
-				
 		}
 
 		if (m_stRecordInfo.is_record_speaker)
 		{
-			if (m_pSpeakerRecorder->Init(m_pAudioCodecCtx, m_stRecordInfo.speaker_audio_info) != 0)
+			if (m_pSpeakerRecorder->Init(m_pAudioCodecCtx) != 0)
 			{
 				OutputDebugStringA("failed to init speaker recorder \n");
-				m_bSpeakerInited = false;
-			}
-			else
-			{
-				OutputDebugStringA("init speaker recorder succeed \n");
-				m_bSpeakerInited = true;
 			}
 		}
 
@@ -378,32 +284,23 @@ namespace MediaFileRecorder
 
 	void CMediaFileRecorder::UnInitAudioRecord()
 	{
-		m_pMicRecorder->UnInit();
-		m_bMicInited = false;
-		m_pSpeakerRecorder->UnInit();
-		m_bSpeakerInited = false;
+		if (m_stRecordInfo.is_record_mic)
+			m_pMicRecorder->UnInit();
+
+		if (m_stRecordInfo.is_record_speaker)
+			m_pSpeakerRecorder->UnInit();
 
 		char log[128] = { 0 };
-		_snprintf_s(log, 128, "Write audio frame count: %lld \n",
-			m_nAudioFrameIndex);
+		_snprintf_s(log, 128, "Write audio packet count: %lld \n",
+			m_nAudioPacketIndex);
 		OutputDebugStringA(log);
-		AudioCleanUp();
 
+		AudioCleanUp();
 		return;
 	}
 
 	void CMediaFileRecorder::AudioCleanUp()
 	{
-		if (m_pAudioFrame)
-		{
-			av_frame_free(&m_pAudioFrame);
-			m_pAudioFrame = NULL;
-		}
-		if (m_pAudioBuffer)
-		{
-			av_free(m_pAudioBuffer);
-			m_pAudioBuffer = NULL;
-		}
 		if (m_pAudioPacket)
 		{
 			av_free_packet(m_pAudioPacket);
@@ -416,7 +313,8 @@ namespace MediaFileRecorder
 			m_pAudioCodecCtx = NULL;
 		}
 
-		m_nAudioFrameIndex = 0;
+		m_nAudioPacketIndex= 0;
+		m_nMainAudioStream = 0;
 	}
 
 
@@ -476,96 +374,6 @@ namespace MediaFileRecorder
 		return - 1;
 	}
 
-	int CMediaFileRecorder::FillVideo(const void* data)
-	{
-		int ret = -1;
-		if (m_stRecordInfo.is_record_video && m_bInited && m_bRun)
-		{
-			int64_t begin_time = timeGetTime();
-			VIDEO_INFO& video_info = m_stRecordInfo.video_info;
-
-			int64_t nVideoCaptureTime = m_nDuration + (timeGetTime() - m_nStartTime);
-			int size = video_info.dst_width * video_info.dst_height;
-
-			int64_t scale_time = 0;
-			if (av_fifo_space(m_pVideoFifoBuffer) >= m_nPicSize + (int)sizeof(int64_t))
-			{
-				int bytes_per_pix;
-				if (video_info.src_pix_fmt == PIX_FMT_ARGB || 
-					video_info.src_pix_fmt  == PIX_FMT_BGRA)
-					bytes_per_pix = 4;
-				else if (video_info.src_pix_fmt == PIX_FMT_BGR24 ||
-					video_info.src_pix_fmt == PIX_FMT_RGB24)
-					bytes_per_pix = 3;
-
-				
-				uint8_t* srcSlice[3] = { (uint8_t*)data, NULL, NULL };
-				int srcStride[3] = { bytes_per_pix * video_info.src_width, 0, 0 };
-				sws_scale(m_pVideoConvertCtx, srcSlice, srcStride, 0, video_info.src_height,
-					m_pInVideoFrame->data, m_pInVideoFrame->linesize);
-				scale_time = timeGetTime() - begin_time;
-
-				EnterCriticalSection(&m_VideoSection);
-				av_fifo_generic_write(m_pVideoFifoBuffer, &nVideoCaptureTime, sizeof(int64_t), NULL);
-				av_fifo_generic_write(m_pVideoFifoBuffer, m_pInVideoFrame->data[0], size, NULL);
-				av_fifo_generic_write(m_pVideoFifoBuffer, m_pInVideoFrame->data[1], size / 4, NULL);
-				av_fifo_generic_write(m_pVideoFifoBuffer, m_pInVideoFrame->data[2], size / 4, NULL);
-				LeaveCriticalSection(&m_VideoSection);
-				m_nVideoWriteFrames++;
-
-				ret = 0;
-			}
-			else
-			{
-				m_nVideoDiscardFrames++;
-			}
-			int64_t duration = timeGetTime() - begin_time;
-			char log[128] = { 0 };
-			_snprintf_s(log, 128, "FillVideo spend time: %lld, scale time: %lld \n", duration, scale_time);
-			OutputDebugStringA(log);
-		}
-		return ret;
-	}
-
-
-	int CMediaFileRecorder::FillMicAudio(const void* audioSamples, int nb_samples)
-	{
-		int ret = -1;
-		if (m_stRecordInfo.is_record_mic && m_bInited && m_bRun)
-		{
-			int64_t begin_time = timeGetTime();
-
-			ret = m_pMicRecorder->FillAudio(audioSamples, nb_samples);
-			int64_t resample_time = timeGetTime() - begin_time;
-
-			char log[128] = { 0 };
-			sprintf_s(log, "Mic FillAudio time: %lld \n", resample_time);
-			OutputDebugStringA(log);
-		}
-
-		return ret;
-	}
-
-
-	int CMediaFileRecorder::FillSpeakerAudio(const void* audioSamples, int nb_samples)
-	{
-		int ret = -1;
-		if (m_stRecordInfo.is_record_speaker && m_bInited & m_bRun)
-		{
-			int64_t begin_time = timeGetTime();
-
-			ret = m_pSpeakerRecorder->FillAudio(audioSamples, nb_samples);
-			int64_t resample_time = timeGetTime() - begin_time;
-
-			char log[128] = { 0 };
-			sprintf_s(log, "Speaker FillAudio time: %lld \n", resample_time);
-			OutputDebugStringA(log);
-		}
-
-		return ret;
-	}
-
-
 	void CMediaFileRecorder::StartWriteFileThread()
 	{
 		m_bRun = true;
@@ -597,91 +405,43 @@ namespace MediaFileRecorder
 
 	void CMediaFileRecorder::VideoWriteFileThreadProc()
 	{
-		char log[128] = { 0 };
-		int sleep_time = 5;
 		while (m_bRun)
 		{
-			// first check the buffer size
-			int space = av_fifo_space(m_pVideoFifoBuffer);
-			int used_size = av_fifo_size(m_pVideoFifoBuffer);
-			int total_size = space + used_size;
-			int ratio = total_size / space;
-			if (ratio >= 10)
-			{
-				// buffer may be insufficient, grow the buffer.
-				EnterCriticalSection(&m_VideoSection);
-				// grow 1/3
-				sprintf_s(log, "total size: %d kb, space: %d kb, used: %d kb, grow: %d kb \n",
-					total_size / 1024, space / 1024, used_size / 1024, total_size / (3 * 1024));
-				OutputDebugStringA(log);
-				int ret = av_fifo_grow(m_pVideoFifoBuffer, total_size / 3);
-				if (ret < 0)
-					OutputDebugStringA("grow failed \n");
-				else
-					OutputDebugStringA("grow succeed! \n");
-
-				LeaveCriticalSection(&m_VideoSection);
-				sleep_time = 1;
-			}
-			else if (ratio <= 2)
-			{
-				// buffer is too big, resize it 
-				EnterCriticalSection(&m_VideoSection);
-				// shrink 1 / 3
-				sprintf_s(log, "total size: %d kb, space: %d kb, used: %d kb, shrink: %d kb \n",
-					total_size / 1024, space / 1024, used_size / 1024, total_size / (3 * 1024));
-				OutputDebugStringA(log);
-				int ret = av_fifo_realloc2(m_pVideoFifoBuffer, total_size * 2 / 3);
-				if (ret < 0)
-					OutputDebugStringA("shrink failed \n");
-				else
-					OutputDebugStringA("shrink succeed! \n");
-
-				LeaveCriticalSection(&m_VideoSection);
-				sleep_time = 5;
-			}
-
 			EncodeAndWriteVideo();
-
-			Sleep(sleep_time);
+			Sleep(10);
 		}
+	}
 
-		// Write the left data to file
-		while (av_fifo_size(m_pVideoFifoBuffer) >= m_nPicSize + (int)sizeof(int64_t))
+	void CMediaFileRecorder::AuidoWriteFileThreadProc()
+	{
+		while (m_bRun)
 		{
-			OutputDebugStringA("Write the left video data to file \n");
-			EncodeAndWriteVideo();
+			EncodeAndWriteAudio();
+			Sleep(10);
 		}
 	}
 
 	void CMediaFileRecorder::EncodeAndWriteVideo()
 	{
-		int64_t begin_time = timeGetTime();
-
-		if (av_fifo_size(m_pVideoFifoBuffer) >= m_nPicSize + (int)sizeof(int64_t))
+		VIDEO_FRAME* pFrame = NULL;
+		while (true)
 		{
-			int64_t nCaptureTime;
-			EnterCriticalSection(&m_VideoSection);
-			av_fifo_generic_read(m_pVideoFifoBuffer, &nCaptureTime, sizeof(int64_t), NULL);
-			av_fifo_generic_read(m_pVideoFifoBuffer, m_pOutPicBuffer, m_nPicSize, NULL);
-			LeaveCriticalSection(&m_VideoSection);
+			pFrame = m_pVideoRecorder->GetOneFrame();
+			if (!pFrame)
+				break;
 
 			int bGotPicture = 0;
-
 			int64_t encode_start_time = timeGetTime();
-			int ret = avcodec_encode_video2(m_pVideoCodecCtx, m_pVideoPacket, m_pOutVideoFrame, &bGotPicture);
+			int ret = avcodec_encode_video2(m_pVideoCodecCtx, m_pVideoPacket, pFrame->pAvFrame, &bGotPicture);
 			int64_t encode_duration = timeGetTime() - encode_start_time;
-
 			if (ret < 0)
-			{
 				return;
-			}
 
 			if (bGotPicture == 1)
 			{
 				AVStream* pStream = m_pFormatCtx->streams[m_nVideoStreamIndex];
 				m_pVideoPacket->stream_index = m_nVideoStreamIndex;
-				m_pVideoPacket->pts = nCaptureTime *(pStream->time_base.den/pStream->time_base.num) / 1000;
+				m_pVideoPacket->pts = pFrame->nCaptureTime *(pStream->time_base.den/pStream->time_base.num) / 1000;
 				m_pVideoPacket->dts = m_pVideoPacket->pts;
 				//m_VideoPacket.duration = 1;
 
@@ -692,24 +452,8 @@ namespace MediaFileRecorder
 				char log[128] = { 0 };
 				_snprintf_s(log, 128, "encode frame: %lld\n", encode_duration);
 				OutputDebugStringA(log);
+				m_nVideoPacketIndex++;
 			}
-			m_nVideoFrameIndex++;
-		}
-		int64_t duration = timeGetTime() - begin_time;
-
-		char log[128] = { 0 };
-		sprintf_s(log, "Write video file time: %lld, used size: %d, space: %d \n",
-			duration, av_fifo_size(m_pVideoFifoBuffer), av_fifo_space(m_pVideoFifoBuffer));
-		OutputDebugStringA(log);
-
-	}
-
-	void CMediaFileRecorder::AuidoWriteFileThreadProc()
-	{
-		while (m_bRun)
-		{
-			EncodeAndWriteAudio();
-			Sleep(5);
 		}
 	}
 
@@ -718,32 +462,49 @@ namespace MediaFileRecorder
 		int64_t begin_time = timeGetTime();
 		bool bGetFrame = false;
 		AVFrame* pMainFrame = NULL;
-		memset(m_pAudioBuffer, 0, m_nAudioSize);
-
-		if (m_stRecordInfo.is_record_speaker && m_bSpeakerInited)
+		AVFrame* pChildFrame = NULL;
+		if (m_stRecordInfo.is_record_mic && m_stRecordInfo.is_record_speaker)
 		{
-			pMainFrame = m_pSpeakerRecorder->GetOneFrame();
-
-			if (!pMainFrame)
-				return;
-		}
-
-		if (m_stRecordInfo.is_record_mic && m_bMicInited)
-		{
-		    AVFrame* pMicFrame = m_pMicRecorder->GetOneFrame();
-			if (pMicFrame)
+			if (m_nMainAudioStream == 0)
 			{
-				if (!pMainFrame)
+				// main stream not decided yet
+				AVFrame* pMicFrame = m_pMicRecorder->GetOneFrame();
+				if (pMicFrame)
 				{
 					pMainFrame = pMicFrame;
+					m_nMainAudioStream = 1;
 				}
-				else
+				AVFrame* pSpeakerFrame = m_pSpeakerRecorder->GetOneFrame();
+				if (pSpeakerFrame && m_nMainAudioStream == 0)
 				{
-					MixAudio(pMainFrame, pMicFrame);
+					pMainFrame = pSpeakerFrame;
+					m_nMainAudioStream = 2;
 				}
 			}
-			
+			else if (m_nMainAudioStream == 1)
+			{
+				pMainFrame = m_pMicRecorder->GetOneFrame();
+				if (!pMainFrame)
+					return;
+				AVFrame* pChildFrame = m_pSpeakerRecorder->GetOneFrame();
+				if (pChildFrame)
+					MixAudio(pMainFrame, pChildFrame);
+			}
+			else if (m_nMainAudioStream == 2)
+			{
+				pMainFrame = m_pSpeakerRecorder->GetOneFrame();
+				if (!pMainFrame)
+					return;
+				AVFrame* pChildFrame = m_pMicRecorder->GetOneFrame();
+				if (pChildFrame)
+					MixAudio(pMainFrame, pChildFrame);
+			}
 		}
+		else if (m_stRecordInfo.is_record_speaker)
+			pMainFrame = m_pSpeakerRecorder->GetOneFrame();
+		else
+			pMainFrame = m_pMicRecorder->GetOneFrame();
+
 		int64_t mix_time = timeGetTime() - begin_time;
 
 		if (pMainFrame)
@@ -762,19 +523,16 @@ namespace MediaFileRecorder
 				m_pAudioPacket->dts = pts/*m_nAudioFrameIndex * m_pAudioCodecCtx->frame_size*/;
 				m_pAudioPacket->duration = m_pAudioCodecCtx->frame_size;
 
-
-				//cur_pts_a = m_AudioPacket.pts;
-
 				EnterCriticalSection(&m_WriteFileSection);
 				av_interleaved_write_frame(m_pFormatCtx, m_pAudioPacket);
 				LeaveCriticalSection(&m_WriteFileSection);
-				m_nAudioFrameIndex++;
+				m_nAudioPacketIndex++;
 			}
 		}
-		int64_t duration = timeGetTime() - begin_time;
+		/*int64_t duration = timeGetTime() - begin_time;
 		char log[128] = { 0 };
 		sprintf_s(log, "Mix audio time: %lld, total time: %lld \n", mix_time, duration);
-		OutputDebugStringA(log);
+		OutputDebugStringA(log);*/
 	}
 
 	void CMediaFileRecorder::MixAudio(AVFrame* pDstFrame, const AVFrame* pSrcFrame)
@@ -798,11 +556,58 @@ namespace MediaFileRecorder
 		}
 	}
 
+	int CMediaFileRecorder::FillVideo(const void* data, const VIDEO_INFO& video_info)
+	{
+		int ret = -1;
+		if (m_stRecordInfo.is_record_video && m_bInited && m_bRun)
+		{
+			int64_t capture_time = m_nDuration + (timeGetTime() - m_nStartTime);
+			ret = m_pVideoRecorder->FillVideo(data, video_info, capture_time);
+		}
+		return ret;
+	}
+
+	int CMediaFileRecorder::FillMicAudio(const void* audioSamples, int nb_samples, const AUDIO_INFO& audio_info)
+	{
+		int ret = -1;
+		if (m_stRecordInfo.is_record_mic && m_bInited && m_bRun)
+		{
+			int64_t begin_time = timeGetTime();
+
+			ret = m_pMicRecorder->FillAudio(audioSamples, nb_samples, audio_info);
+			int64_t resample_time = timeGetTime() - begin_time;
+
+			char log[128] = { 0 };
+			sprintf_s(log, "Mic FillAudio time: %lld \n", resample_time);
+			OutputDebugStringA(log);
+		}
+
+		return ret;
+	}
+
+	int CMediaFileRecorder::FillSpeakerAudio(const void* audioSamples, int nb_samples, const AUDIO_INFO& audio_info)
+	{
+		int ret = -1;
+		if (m_stRecordInfo.is_record_speaker && m_bInited & m_bRun)
+		{
+			int64_t begin_time = timeGetTime();
+
+			ret = m_pSpeakerRecorder->FillAudio(audioSamples, nb_samples, audio_info);
+			int64_t resample_time = timeGetTime() - begin_time;
+
+			char log[128] = { 0 };
+			sprintf_s(log, "Speaker FillAudio time: %lld \n", resample_time);
+			OutputDebugStringA(log);
+		}
+
+		return ret;
+	}
+
 
 //////////////////////////////////////////////////////////////////////////////
 //// Class CAudioRecord
 
-	CAudioRecordBuffer::CAudioRecordBuffer()
+	CAudioRecord::CAudioRecord()
 		:m_pCodecCtx(NULL),
 		m_pConvertCtx(NULL),
 		m_pFifoBuffer(NULL),
@@ -816,12 +621,15 @@ namespace MediaFileRecorder
 		memset(m_pResampleBuffer, 0, sizeof(m_pResampleBuffer));
 	}
 
-	CAudioRecordBuffer::~CAudioRecordBuffer()
+	CAudioRecord::~CAudioRecord()
 	{
-
+		if (m_bInited)
+		{
+			UnInit();
+		}
 	}
 
-	int CAudioRecordBuffer::Init(const AVCodecContext* pCodecCtx, const AUDIO_INFO& src_audio_info)
+	int CAudioRecord::Init(const AVCodecContext* pCodecCtx)
 	{
 		if (m_bInited)
 		{
@@ -830,48 +638,6 @@ namespace MediaFileRecorder
 		}
 
 		m_pCodecCtx = pCodecCtx;
-		m_stAudioInfo = src_audio_info;
-
-		AVSampleFormat src_av_sample_fmt;
-		if (!ConvertToAVSampleFormat(m_stAudioInfo.audio_format, src_av_sample_fmt))
-		{
-			OutputDebugStringA("FiilAudio: convert to av sample format failed \n");
-			CleanUp();
-			return -1;
-		}
-
-		int64_t src_av_ch_layout;
-		if (!ConvertToAVChannelLayOut(m_stAudioInfo.chl_layout, src_av_ch_layout))
-		{
-			OutputDebugStringA("FillAudio: convert to av channel layout failed \n");
-			CleanUp();
-			return -1;
-		}
-
-		int src_nb_channels = av_get_channel_layout_nb_channels(src_av_sample_fmt);
-
-		m_pConvertCtx = swr_alloc();
-		// init audio resample context
-		//设置源通道布局  
-		av_opt_set_int(m_pConvertCtx, "in_channel_layout", src_av_ch_layout, 0);
-		//设置源通道采样率  
-		av_opt_set_int(m_pConvertCtx, "in_sample_rate", src_audio_info.sample_rate, 0);
-		//设置源通道样本格式  
-		av_opt_set_sample_fmt(m_pConvertCtx, "in_sample_fmt", src_av_sample_fmt, 0);
-
-		//目标通道布局  
-		av_opt_set_int(m_pConvertCtx, "out_channel_layout", m_pCodecCtx->channel_layout, 0);
-		//目标采用率  
-		av_opt_set_int(m_pConvertCtx, "out_sample_rate", m_pCodecCtx->sample_rate, 0);
-		//目标样本格式  
-		av_opt_set_sample_fmt(m_pConvertCtx, "out_sample_fmt", m_pCodecCtx->sample_fmt, 0);
-
-		if (swr_init(m_pConvertCtx) < 0)
-		{
-			OutputDebugStringA("swr_init failed in FillAudio. \n");
-			CleanUp();
-			return -1;
-		}
 
 		m_pFrame = av_frame_alloc();
 		m_pFrame->nb_samples = m_pCodecCtx->frame_size;
@@ -898,11 +664,73 @@ namespace MediaFileRecorder
 		return 0;
 	}
 
-	int CAudioRecordBuffer::FillAudio(const void* audioSamples, int nb_samples)
+
+	int CAudioRecord::ResetConvertCtx()
+	{
+		AVSampleFormat src_av_sample_fmt;
+		if (!ConvertToAVSampleFormat(m_stAudioInfo.audio_format, src_av_sample_fmt))
+		{
+			OutputDebugStringA("FiilAudio: convert to av sample format failed \n");
+			CleanUp();
+			return -1;
+		}
+
+		int64_t src_av_ch_layout;
+		if (!ConvertToAVChannelLayOut(m_stAudioInfo.chl_layout, src_av_ch_layout))
+		{
+			OutputDebugStringA("FillAudio: convert to av channel layout failed \n");
+			CleanUp();
+			return -1;
+		}
+
+		int src_nb_channels = av_get_channel_layout_nb_channels(src_av_sample_fmt);
+
+		if (m_pConvertCtx)
+			swr_free(&m_pConvertCtx);
+
+		m_pConvertCtx = swr_alloc();
+		// init audio resample context
+		//设置源通道布局  
+		av_opt_set_int(m_pConvertCtx, "in_channel_layout", src_av_ch_layout, 0);
+		//设置源通道采样率  
+		av_opt_set_int(m_pConvertCtx, "in_sample_rate", m_stAudioInfo.sample_rate, 0);
+		//设置源通道样本格式  
+		av_opt_set_sample_fmt(m_pConvertCtx, "in_sample_fmt", src_av_sample_fmt, 0);
+
+		//目标通道布局  
+		av_opt_set_int(m_pConvertCtx, "out_channel_layout", m_pCodecCtx->channel_layout, 0);
+		//目标采用率  
+		av_opt_set_int(m_pConvertCtx, "out_sample_rate", m_pCodecCtx->sample_rate, 0);
+		//目标样本格式  
+		av_opt_set_sample_fmt(m_pConvertCtx, "out_sample_fmt", m_pCodecCtx->sample_fmt, 0);
+
+		if (swr_init(m_pConvertCtx) < 0)
+		{
+			OutputDebugStringA("swr_init failed in FillAudio. \n");
+			CleanUp();
+			return -1;
+		}
+		return 0;
+	}
+
+	int CAudioRecord::FillAudio(const void* audioSamples, int nb_samples, const AUDIO_INFO& audio_info)
 	{
 		if (m_bInited)
 		{
 			int ret = -1;
+
+			if (audio_info.audio_format != m_stAudioInfo.audio_format ||
+				audio_info.chl_layout != m_stAudioInfo.chl_layout ||
+				audio_info.sample_rate != m_stAudioInfo.sample_rate)
+			{
+				m_stAudioInfo = audio_info;
+				ret = ResetConvertCtx();
+				if (ret != 0)
+				{
+					OutputDebugStringA("Get audio convert context failed \n");
+					return -1;
+				}
+			}
 
 			int dst_nb_samples = (int)av_rescale_rnd(
 				swr_get_delay(m_pConvertCtx, m_stAudioInfo.sample_rate) + nb_samples,
@@ -950,7 +778,7 @@ namespace MediaFileRecorder
 	}
 
 
-	AVFrame* CAudioRecordBuffer::GetOneFrame()
+	AVFrame* CAudioRecord::GetOneFrame()
 	{
 		if (m_bInited)
 		{
@@ -967,7 +795,7 @@ namespace MediaFileRecorder
 	}
 
 
-	int CAudioRecordBuffer::UnInit()
+	int CAudioRecord::UnInit()
 	{
 		if (m_bInited)
 		{
@@ -982,7 +810,7 @@ namespace MediaFileRecorder
 		return -1;
 	}
 
-	void CAudioRecordBuffer::CleanUp()
+	void CAudioRecord::CleanUp()
 	{
 		if (m_pFrame)
 		{
@@ -1009,9 +837,271 @@ namespace MediaFileRecorder
 			av_freep(m_pResampleBuffer);
 			memset(m_pResampleBuffer, 0, sizeof(m_pResampleBuffer));
 		}
+
+		m_stAudioInfo.Reset();
 		m_nResampleBufferSize = 0;
 		m_nSavedAudioSamples = 0;
 		m_nDiscardAudioSamples = 0;
+	}
+
+	
+	// Video recorder
+
+	CVideoRecord::CVideoRecord()
+		:m_pCodecCtx(NULL),
+		m_pConvertCtx(NULL),
+		m_pOutVideoFrame(NULL),
+		m_pOutPicBuffer(NULL),
+		m_pInVideoFrame(NULL),
+		m_pInPicBuffer(NULL),
+		m_pFifoBuffer(NULL),
+		m_nPicSize(0),
+		m_nSavedFrames(0),
+		m_nDiscardFrames(0)
+	{
+		m_bInited = false;
+	}
+
+	CVideoRecord::~CVideoRecord()
+	{
+		if (m_bInited)
+		{
+			UnInit();
+		}
+	}
+
+	int CVideoRecord::Init(const AVCodecContext* pCodecCtx)
+	{
+		if (m_bInited)
+		{
+			OutputDebugStringA("Already inited \n");
+			return -1;
+		}
+
+		m_pCodecCtx = pCodecCtx;
+
+		m_nPicSize = avpicture_get_size(m_pCodecCtx->pix_fmt, m_pCodecCtx->width, m_pCodecCtx->height);
+		m_pOutVideoFrame = av_frame_alloc();
+		m_pOutPicBuffer = (uint8_t*)av_malloc(m_nPicSize);
+		avpicture_fill((AVPicture*)m_pOutVideoFrame, m_pOutPicBuffer, m_pCodecCtx->pix_fmt,
+			m_pCodecCtx->width, m_pCodecCtx->height);
+
+		m_pInVideoFrame = av_frame_alloc();
+		m_pInPicBuffer = (uint8_t*)av_malloc(m_nPicSize);
+		avpicture_fill((AVPicture*)m_pInVideoFrame, m_pInPicBuffer, m_pCodecCtx->pix_fmt,
+			m_pCodecCtx->width, m_pCodecCtx->height);
+
+		//申请30帧缓存
+		m_pFifoBuffer = av_fifo_alloc(30 * m_nPicSize);
+
+		InitializeCriticalSection(&m_BufferSection);
+
+		m_bInited = true;
+
+		return 0;
+	}
+
+	int CVideoRecord::UnInit()
+	{
+		if (m_bInited)
+		{
+			char log[128] = { 0 };
+			_snprintf_s(log, 128, "Video: saved frames: %lld, discarded frames: %lld\n",
+				m_nSavedFrames, m_nDiscardFrames);
+			OutputDebugStringA(log);
+			CleanUp();
+			m_bInited = false;
+			return 0;
+		}
+		return -1;
+	}
+
+
+	int CVideoRecord::ResetConvertCtx()
+	{
+		// Init swscontext
+		AVPixelFormat av_pix_fmt;
+		if (!ConvertToAVPixelFormat(m_stVideoInfo.pix_fmt, av_pix_fmt))
+		{
+			OutputDebugStringA("InitVideoRecord: convert to av pixel format failed \n");
+			CleanUp();
+			return -1;
+		}
+		if (m_pConvertCtx)
+			sws_freeContext(m_pConvertCtx);
+
+		m_pConvertCtx = sws_getContext(
+			m_stVideoInfo.width, m_stVideoInfo.height,
+			av_pix_fmt, m_pCodecCtx->width,
+			m_pCodecCtx->height, AV_PIX_FMT_YUV420P,
+			NULL, NULL,
+			NULL, NULL);
+		if (!m_pConvertCtx)
+		{
+			OutputDebugStringA("ResetConvertCtx: get convert context failed \n");
+			CleanUp();
+			return -1;
+		}
+		return 0;
+	}
+
+
+	int CVideoRecord::FillVideo(const void* video_data, const VIDEO_INFO& video_info, int64_t capture_time)
+	{
+		int ret = -1;
+		int64_t begin_time = timeGetTime();
+		int64_t scale_time = 0;
+
+		// first check the buffer size
+		CheckBufferSpace();
+
+		if (av_fifo_space(m_pFifoBuffer) >= m_nPicSize + (int)sizeof(int64_t))
+		{
+			if (video_info.width != m_stVideoInfo.width ||
+				video_info.height != m_stVideoInfo.height ||
+				video_info.pix_fmt != m_stVideoInfo.pix_fmt)
+			{
+				m_stVideoInfo = video_info;
+				ret = ResetConvertCtx();
+				if (ret != 0)
+				{
+					OutputDebugStringA("Reset video convert context failed \n");
+					return -1;
+				}
+			}
+			int bytes_per_pix;
+			if (m_stVideoInfo.pix_fmt == PIX_FMT_ARGB ||
+				m_stVideoInfo.pix_fmt == PIX_FMT_BGRA)
+				bytes_per_pix = 4;
+			else if (m_stVideoInfo.pix_fmt == PIX_FMT_BGR24 ||
+				m_stVideoInfo.pix_fmt == PIX_FMT_RGB24)
+				bytes_per_pix = 3;
+
+
+			uint8_t* srcSlice[3] = { (uint8_t*)video_data, NULL, NULL };
+			int srcStride[3] = { bytes_per_pix * m_stVideoInfo.width, 0, 0 };
+			sws_scale(m_pConvertCtx, srcSlice, srcStride, 0, m_stVideoInfo.height,
+				m_pInVideoFrame->data, m_pInVideoFrame->linesize);
+			scale_time = timeGetTime() - begin_time;
+
+			int size = m_pCodecCtx->width * m_pCodecCtx->height;
+
+			EnterCriticalSection(&m_BufferSection);
+			av_fifo_generic_write(m_pFifoBuffer, &capture_time, sizeof(int64_t), NULL);
+			av_fifo_generic_write(m_pFifoBuffer, m_pInPicBuffer, m_nPicSize, NULL);
+			LeaveCriticalSection(&m_BufferSection);
+			m_nSavedFrames++;
+			ret = 0;
+		}
+		else
+		{
+			m_nDiscardFrames++;
+		}
+		int64_t duration = timeGetTime() - begin_time;
+		char log[128] = { 0 };
+		_snprintf_s(log, 128, "FillVideo spend time: %lld, scale time: %lld \n", duration, scale_time);
+		OutputDebugStringA(log);
+		return ret;
+	}
+
+
+	void CVideoRecord::CheckBufferSpace()
+	{
+		// first check the buffer size
+		int space = av_fifo_space(m_pFifoBuffer);
+		int used_size = av_fifo_size(m_pFifoBuffer);
+		int total_size = space + used_size;
+		int ratio = total_size / space;
+
+		char log[128] = { 0 };
+		if (ratio >= 10)
+		{
+			// buffer may be insufficient, grow the buffer.
+			EnterCriticalSection(&m_BufferSection);
+			// grow 1/3
+			sprintf_s(log, "total size: %d kb, space: %d kb, used: %d kb, grow: %d kb \n",
+				total_size / 1024, space / 1024, used_size / 1024, total_size / (3 * 1024));
+			OutputDebugStringA(log);
+			int ret = av_fifo_grow(m_pFifoBuffer, total_size / 3);
+			if (ret < 0)
+				OutputDebugStringA("grow failed \n");
+			else
+				OutputDebugStringA("grow succeed! \n");
+
+			LeaveCriticalSection(&m_BufferSection);
+		}
+		else if (ratio <= 2)
+		{
+			// buffer is too big, resize it 
+			EnterCriticalSection(&m_BufferSection);
+			// shrink 1 / 3
+			sprintf_s(log, "total size: %d kb, space: %d kb, used: %d kb, shrink: %d kb \n",
+				total_size / 1024, space / 1024, used_size / 1024, total_size / (3 * 1024));
+			OutputDebugStringA(log);
+			int ret = av_fifo_realloc2(m_pFifoBuffer, total_size * 2 / 3);
+			if (ret < 0)
+				OutputDebugStringA("shrink failed \n");
+			else
+				OutputDebugStringA("shrink succeed! \n");
+
+			LeaveCriticalSection(&m_BufferSection);
+		}
+	}
+
+
+	VIDEO_FRAME* CVideoRecord::GetOneFrame()
+	{
+		if (av_fifo_size(m_pFifoBuffer) >= m_nPicSize + (int)sizeof(int64_t))
+		{
+			int64_t nCaptureTime;
+			EnterCriticalSection(&m_BufferSection);
+			av_fifo_generic_read(m_pFifoBuffer, &nCaptureTime, sizeof(int64_t), 0);
+			av_fifo_generic_read(m_pFifoBuffer, m_pOutPicBuffer, m_nPicSize, 0);
+			LeaveCriticalSection(&m_BufferSection);
+			m_VideoFrame.nCaptureTime = nCaptureTime;
+			m_VideoFrame.pAvFrame = m_pOutVideoFrame;
+			return &m_VideoFrame;
+		}
+		return NULL;
+	}
+
+	void CVideoRecord::CleanUp()
+	{
+		if (m_pConvertCtx)
+		{
+			sws_freeContext(m_pConvertCtx);
+			m_pConvertCtx = NULL;
+		}
+		if (m_pOutVideoFrame)
+		{
+			av_free(m_pOutVideoFrame);
+			m_pOutVideoFrame = NULL;
+		}
+		if (m_pOutPicBuffer)
+		{
+			av_free(m_pOutPicBuffer);
+			m_pOutPicBuffer = NULL;
+		}
+		if (m_pInVideoFrame)
+		{
+			av_free(m_pInVideoFrame);
+			m_pInVideoFrame = NULL;
+		}
+		if (m_pInPicBuffer)
+		{
+			av_free(m_pInPicBuffer);
+			m_pInPicBuffer = NULL;
+		}
+		if (m_pFifoBuffer)
+		{
+			av_fifo_free(m_pFifoBuffer);
+			m_pFifoBuffer = NULL;
+		}
+		m_stVideoInfo.Reset();
+		m_nPicSize = 0;
+		m_nSavedFrames = 0;
+		m_nDiscardFrames = 0;
+
 	}
 
 	bool ConvertToAVSampleFormat(AUDIO_FORMAT audio_format, AVSampleFormat& av_sample_fmt)
@@ -1163,6 +1253,7 @@ namespace MediaFileRecorder
 	}
 
 
+
 	IMediaFileRecorder* CreateMediaFileRecorder()
 	{
 		IMediaFileRecorder* pMediaFileRecorder = new CMediaFileRecorder();
@@ -1173,5 +1264,6 @@ namespace MediaFileRecorder
 	{
 		delete pMediaFileRecorder;
 	}
+
 }
 

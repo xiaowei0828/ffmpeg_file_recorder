@@ -12,7 +12,7 @@ namespace MediaFileRecorder
 		SystemInfo systemInfo;
 		if (systemInfo.windows_version() >= SystemInfo::WINDOWS_VISTA)
 		{
-			pAudioCapture = new CWAVEAudioCapture();
+			pAudioCapture = new CWASAudioCapture();
 		}
 		else
 		{

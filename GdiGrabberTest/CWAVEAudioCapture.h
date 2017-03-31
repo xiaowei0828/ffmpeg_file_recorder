@@ -29,18 +29,19 @@ namespace MediaFileRecorder
 		int UnRegisterCaptureDataCb(IAudioCaptureDataCb* pDataCb) override;
 		int SetMic(int index) override;
 		int SetSpeaker(int index) override;
-		int InitMic() override;
-		int UnInitMic() override;
-		int InitSpeaker() override;
-		int UnInitSpeaker() override;
-		int GetMicAudioInfo(AUDIO_INFO& audioInfo) override;
-		int GetSoundCardAudioInfo(AUDIO_INFO& audioInfo) override;
 		int StartCaptureMic() override;
 		int StopCaptureMic() override;
 		int StartCaptureSoundCard() override;
 		int StopCaptureSoundCard() override;
 
 	private:
+		int InitMic();
+		int UnInitMic();
+		void CleanUpMic();
+		int InitSpeaker();
+		int UnInitSpeaker();
+		int StartCaptureMicThread();
+		int StopCaptureMicThread();
 		void MicCaptureThreadProc();
 
 		/*static void CapturedDataCb(

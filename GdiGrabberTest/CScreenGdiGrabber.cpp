@@ -6,13 +6,13 @@ namespace MediaFileRecorder {
 
 	CScreenGdiGrabber::CScreenGdiGrabber()
 	{
+		started_ = false;
+		run_ = false;
 		frame_rate_ = 15;
 		grab_rect_.left = grab_rect_.top = 0;
 		grab_rect_.right = GetSystemMetrics(SM_CXSCREEN);
 		grab_rect_.bottom = GetSystemMetrics(SM_CYSCREEN);
-		started_ = false;
-		last_tick_count_ = 0;
-		perf_freq_.QuadPart = 0;
+		InitializeCriticalSection(&m_sectionDataCb);
 	}
 
 	CScreenGdiGrabber::~CScreenGdiGrabber()
@@ -28,7 +28,9 @@ namespace MediaFileRecorder {
 		if (find(vec_data_cb_.begin(), vec_data_cb_.end(), cb) ==
 			vec_data_cb_.end())
 		{
+			EnterCriticalSection(&m_sectionDataCb);
 			vec_data_cb_.push_back(cb);
+			LeaveCriticalSection(&m_sectionDataCb);
 			return 0;
 		}
 		return -1;
@@ -39,20 +41,19 @@ namespace MediaFileRecorder {
 		auto iter = std::find(vec_data_cb_.begin(), vec_data_cb_.end(), cb);
 		if (iter != vec_data_cb_.end())
 		{
+			EnterCriticalSection(&m_sectionDataCb);
 			vec_data_cb_.erase(iter);
+			LeaveCriticalSection(&m_sectionDataCb);
 			return 0;
 		}
 		return -1;
 	}
 
-	int CScreenGdiGrabber::SetGrabRect(int left, int top, int right, int bottom)
+	int CScreenGdiGrabber::SetGrabRect(const RECT& rect)
 	{
 		if (!started_)
 		{
-			grab_rect_.left = left;
-			grab_rect_.top = top;
-			grab_rect_.right = right;
-			grab_rect_.bottom = bottom;
+			grab_rect_ = rect;
 			return 0;
 		}
 		return -1;
@@ -76,14 +77,15 @@ namespace MediaFileRecorder {
 			return -1;
 		}
 
-		CalculateFrameIntervalTick();
-
 		src_dc_ = GetDC(NULL);
 		dst_dc_ = CreateCompatibleDC(src_dc_);
 
+		int width = grab_rect_.right - grab_rect_.left;
+		int height = grab_rect_.bottom - grab_rect_.top;
+
 		bmi_.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-		bmi_.bmiHeader.biWidth = grab_rect_.right - grab_rect_.left;
-		bmi_.bmiHeader.biHeight = -(grab_rect_.bottom - grab_rect_.top);
+		bmi_.bmiHeader.biWidth = width;
+		bmi_.bmiHeader.biHeight = -height;
 		bmi_.bmiHeader.biPlanes = 1;
 		bmi_.bmiHeader.biBitCount = 24;
 		bmi_.bmiHeader.biCompression = BI_RGB;
@@ -97,14 +99,17 @@ namespace MediaFileRecorder {
 		if (!hbmp_)
 		{
 			OutputDebugStringA("Create DIB section failed");
+			CleanUp();
 			return -1;
 		}
-
 		SelectObject(dst_dc_, hbmp_);
 
-		m_hGrabTimer = CreateWaitableTimer(NULL, FALSE, NULL);
+		video_info_.width = width;
+		video_info_.height = height;
+		video_info_.pix_fmt = PIX_FMT_BGR24;
 
 		StartGrabThread();
+
 		started_ = true;
 		return 0;
 	}
@@ -114,87 +119,82 @@ namespace MediaFileRecorder {
 		if (started_)
 		{
 			StopGrabThread();
-			ReleaseDC(NULL, src_dc_);
-			DeleteDC(dst_dc_);
-			DeleteObject(hbmp_);
-			DeleteObject(m_hGrabTimer);
+			CleanUp();
 			started_ = false;
 			return 0;
 		}
 		return -1;
 	}
 
-	void CScreenGdiGrabber::StartGrabThread()
+
+	void CScreenGdiGrabber::CleanUp()
 	{
-		run_ = true;
-		grab_thread_.swap(std::thread(std::bind(&CScreenGdiGrabber::GrabThreadProc, this)));
-		SetThreadPriority(grab_thread_.native_handle(), THREAD_PRIORITY_TIME_CRITICAL);
+		if (src_dc_)
+		{
+			ReleaseDC(NULL, src_dc_);
+			src_dc_ = NULL;
+		}
+		if (dst_dc_)
+		{
+			DeleteDC(dst_dc_);
+			dst_dc_ = NULL;
+		}
+		if (hbmp_)
+		{
+			DeleteObject(hbmp_);
+			hbmp_ = NULL;
+		}
 	}
 
-	void CScreenGdiGrabber::StopGrabThread()
+
+	int CScreenGdiGrabber::StartGrabThread()
 	{
-		run_ = false;
-		if (grab_thread_.joinable())
-			grab_thread_.join();
+		if (!run_)
+		{
+			run_ = true;
+			grab_thread_.swap(std::thread(std::bind(&CScreenGdiGrabber::GrabThreadProc, this)));
+			SetThreadPriority(grab_thread_.native_handle(), THREAD_PRIORITY_TIME_CRITICAL);
+			return 0;
+		}
+		return -1;
+	}
+
+	int CScreenGdiGrabber::StopGrabThread()
+	{
+		if (run_)
+		{
+			run_ = false;
+			if (grab_thread_.joinable())
+				grab_thread_.join();
+			return 0;
+		}
+		return -1;
 	}
 
 	void CScreenGdiGrabber::GrabThreadProc()
 	{
+		int nInterval = 1000 / frame_rate_;
+		HANDLE hWaitableTimer = CreateWaitableTimer(NULL, FALSE, NULL);
+		LARGE_INTEGER fireTime;
+		fireTime.QuadPart = -1;
+		SetWaitableTimer(hWaitableTimer, &fireTime, nInterval, NULL, NULL, FALSE);
 		while (run_)
 		{
-			int width = grab_rect_.right - grab_rect_.left;
-			int heigth = grab_rect_.bottom - grab_rect_.top;
-			int64_t begin = timeGetTime();
+			WaitForSingleObject(hWaitableTimer, INFINITE);
 			BitBlt(dst_dc_, 0, 0,
-				width, heigth, src_dc_,
+				video_info_.width, video_info_.height, src_dc_,
 				grab_rect_.left, grab_rect_.top,
 				SRCCOPY);
 
-			int64_t duration = timeGetTime() - begin;
-
-			int64_t interval_tick = GetCurrentTickCount() - last_tick_count_;
-			if (interval_tick < frame_interval_tick_)
-			{
-				LARGE_INTEGER first_fire_time;
-				first_fire_time.QuadPart = -((frame_interval_tick_ - interval_tick) * 10000000 / perf_freq_.QuadPart);
-				SetWaitableTimer(m_hGrabTimer, &first_fire_time, 0, NULL, NULL, FALSE);
-				WaitForSingleObject(m_hGrabTimer, INFINITE);
-				CancelWaitableTimer(m_hGrabTimer);
-				/*Sleep(5);
-				interval_tick = GetCurrentTickCount() - last_tick_count_;*/
-			}
-
-			char log[128] = { 0 };
-			_snprintf_s(log, 128, "required interval: %lld, interval: %lld, bitblt time: %lld \n",
-				frame_interval_tick_ * 1000 / perf_freq_.QuadPart,
-				(GetCurrentTickCount() - last_tick_count_) * 1000 / perf_freq_.QuadPart,
-				duration);
-			OutputDebugStringA(log);
-
-			last_tick_count_ = GetCurrentTickCount();
-
+			EnterCriticalSection(&m_sectionDataCb);
 			for (IScreenGrabberDataCb* cb : vec_data_cb_)
 			{
-				cb->OnScreenData(bmp_buffer_, width, heigth, PIX_FMT::PIX_FMT_BGR24);
+				cb->OnScreenData(bmp_buffer_, video_info_);
 			}
-		}
-	}
-
-	int64_t CScreenGdiGrabber::GetCurrentTickCount()
-	{
-		LARGE_INTEGER current_counter;
-		QueryPerformanceCounter(&current_counter);
-		return current_counter.QuadPart;
-	}
-
-	void CScreenGdiGrabber::CalculateFrameIntervalTick()
-	{
-		if (perf_freq_.QuadPart == 0)
-		{
-			QueryPerformanceFrequency(&perf_freq_);
+			LeaveCriticalSection(&m_sectionDataCb);
 		}
 
-		frame_interval_tick_ = perf_freq_.QuadPart / frame_rate_;
+		CloseHandle(hWaitableTimer);
 	}
 
 }

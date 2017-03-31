@@ -5,35 +5,23 @@
 #pragma once
 #include "afxwin.h"
 #include "VideoStatic.h"
-#include "IScreenGrabber.h"
-#include "IAudioCapture.h"
-#include "CMediaFileRecorder.h"
 #include <memory>
+#include "IScreeAudioRecord.h"
 
 // CGdiGrabberTestDlg 对话框
-class CGdiGrabberTestDlg : public CDialogEx, 
-	public MediaFileRecorder::IScreenGrabberDataCb,
-	public MediaFileRecorder::IAudioCaptureDataCb
+class CGdiGrabberTestDlg : public CDialogEx
 {
 // 构造
 public:
 	CGdiGrabberTestDlg(CWnd* pParent = NULL);	// 标准构造函数
-
+	~CGdiGrabberTestDlg();
 // 对话框数据
 	enum { IDD = IDD_GDIGRABBERTEST_DIALOG };
 
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
 
-	void OnScreenData(void* data, int width, int height, MediaFileRecorder::PIX_FMT pix_fmt) override;
-
-	void OnCapturedMicData(const void* audioSamples, int nSamples) override;
-
-	void OnCapturedSoundCardData(const void* audioSamples, int nSamples) override;
-
 public:
-
-	AVSampleFormat ConvertToAVSampleFormat(MediaFileRecorder::AUDIO_FORMAT audio_format);
 
 	int64_t ConvertToAVChannelLayOut(MediaFileRecorder::CHANNEL_LAYOUT channel_lay_out);
 
@@ -52,9 +40,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	CVideoStatic m_StaticPic;
-	MediaFileRecorder::IScreenGrabber* screen_grabber_;
-	MediaFileRecorder::IMediaFileRecorder* media_file_recorder_;
-	MediaFileRecorder::IAudioCapture* audio_capture_;
+	MediaFileRecorder::IScreenAudioRecord* m_pRecorder;
 
 	bool record_started_;
 	bool record_interrupt_;

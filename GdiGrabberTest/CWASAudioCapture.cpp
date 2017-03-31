@@ -25,23 +25,16 @@ namespace MediaFileRecorder
 
 	CWASAudioCapture::~CWASAudioCapture()
 	{
-		if (m_bMicInited)
+		if (m_bCapturingMic)
 		{
-			if (m_bCapturingMic)
-			{
-				StopCaptureMic();
-			}
-			UnInitMic();
+			StopCaptureMic();
 		}
 
-		if (m_bSpeakerInited)
+		if (m_bCapturingSpeaker)
 		{
-			if (m_bCapturingSpeaker)
-			{
-				StopCaptureSoundCard();
-			}
-			UnInitSpeaker();
+			StopCaptureSoundCard();
 		}
+
 		if (m_hMicCaptureStopEvent)
 		{
 			CloseHandle(m_hMicCaptureStopEvent);
@@ -97,6 +90,112 @@ namespace MediaFileRecorder
 		return 0;
 	}
 
+	int CWASAudioCapture::StartCaptureMic()
+	{
+		if (m_bCapturingMic)
+		{
+			OutputDebugStringA("Mic: capture already started \n");
+			return -1;
+		}
+
+		int ret = InitMic();
+		if (ret != 0)
+		{
+			OutputDebugStringA("Mic: InitMic failed \n");
+			return -1;
+		}
+
+		HRESULT res = m_pMicAudioClient->Start();
+		if (FAILED(res))
+		{
+			OutputDebugStringA("Mic: start capture failed \n");
+			UnInitMic();
+			return -1;
+		}
+
+		m_CaptureMicThread.swap(std::thread(std::bind(&CWASAudioCapture::CaptureMicThreadProc, this)));
+		SetThreadPriority(m_CaptureMicThread.native_handle(), THREAD_PRIORITY_TIME_CRITICAL);
+		m_bCapturingMic = true;
+
+		return 0;
+	}
+
+	int CWASAudioCapture::StopCaptureMic()
+	{
+		if (!m_bCapturingMic)
+		{
+			OutputDebugStringA("Mic: capture hasn't been started");
+			return -1;
+		}
+
+		SetEvent(m_hMicCaptureStopEvent);
+		if (m_CaptureMicThread.joinable())
+		{
+			m_CaptureMicThread.join();
+		}
+
+		m_pMicAudioClient->Stop();
+		m_bCapturingMic = false;
+
+		UnInitMic();
+
+		return 0;
+	}
+
+	int CWASAudioCapture::StartCaptureSoundCard()
+	{
+		if (m_bCapturingSpeaker)
+		{
+			OutputDebugStringA("Speaker: already captured \n");
+			return -1;
+		}
+
+		int ret = InitSpeaker();
+		if (ret != 0)
+		{
+			OutputDebugStringA("Speaker: InitSpeaker failed \n");
+			return -1;
+		}
+
+		HRESULT res = m_pSpeakerAudioClient->Start();
+		if (FAILED(res))
+		{
+			OutputDebugStringA("Speaker: start capture failed \n");
+			UnInitSpeaker();
+			return -1;
+		}
+
+		m_CaptureSpeakerThread.swap(std::thread(std::bind(&CWASAudioCapture::CaptureSpeakerThreadProc, this)));
+		SetThreadPriority(m_CaptureSpeakerThread.native_handle(), THREAD_PRIORITY_TIME_CRITICAL);
+		
+		m_bCapturingSpeaker = true;
+
+		return 0;
+	}
+
+	int CWASAudioCapture::StopCaptureSoundCard()
+	{
+		if (!m_bCapturingSpeaker)
+		{
+			OutputDebugStringA("Speaker: capture hasn't been started");
+			return -1;
+		}
+
+		SetEvent(m_hSpeakerCaptureSopEvent);
+		if (m_CaptureSpeakerThread.joinable())
+		{
+			m_CaptureSpeakerThread.join();
+		}
+
+		m_pSpeakerAudioClient->Stop();
+
+		m_bCapturingSpeaker = false;
+
+		UnInitSpeaker();
+
+		return 0;
+	}
+
 	int CWASAudioCapture::InitMic()
 	{
 		if (m_bMicInited)
@@ -122,6 +221,7 @@ namespace MediaFileRecorder
 			if (FAILED(res))
 			{
 				OutputDebugStringA("Get default mic device failed \n");
+				CleanUpMic();
 				return -1;
 			}
 		}
@@ -132,6 +232,7 @@ namespace MediaFileRecorder
 			if (FAILED(res))
 			{
 				OutputDebugStringA("Get device collection failed \n");
+				CleanUpMic();
 				return -1;
 			}
 
@@ -139,6 +240,7 @@ namespace MediaFileRecorder
 			if (FAILED(res))
 			{
 				OutputDebugStringA("Get mic device failed \n");
+				CleanUpMic();
 				return -1;
 			}
 		}
@@ -148,6 +250,7 @@ namespace MediaFileRecorder
 		if (FAILED(res))
 		{
 			OutputDebugStringA("Mic: Activate audio client failed \n");
+			CleanUpMic();
 			return -1;
 		}
 
@@ -156,6 +259,7 @@ namespace MediaFileRecorder
 		if (FAILED(res))
 		{
 			OutputDebugStringA("Mic: GetMixFormat failed \n");
+			CleanUpMic();
 			return -1;
 		}
 
@@ -166,6 +270,7 @@ namespace MediaFileRecorder
 		if (FAILED(res))
 		{
 			OutputDebugStringA("Mic: Audio client initialize failed \n");
+			CleanUpMic();
 			return -1;
 		}
 
@@ -173,6 +278,7 @@ namespace MediaFileRecorder
 		if (FAILED(res))
 		{
 			OutputDebugStringA("Mic: get capture service failed \n");
+			CleanUpMic();
 			return -1;
 		}
 
@@ -180,6 +286,7 @@ namespace MediaFileRecorder
 		if (FAILED(res))
 		{
 			OutputDebugStringA("Mic: SetEventHandle failed \n");
+			CleanUpMic();
 			return -1;
 		}
 
@@ -192,13 +299,7 @@ namespace MediaFileRecorder
 	{
 		if (m_bMicInited)
 		{
-			if (m_bCapturingMic)
-			{
-				StopCaptureMic();
-			}
-			m_pMicCaptureClient.Release();
-			m_pMicAudioClient.Release();
-			m_pMicDev.Release();
+			CleanUpMic();
 			m_bMicInited = false;
 			return 0;
 		}
@@ -230,6 +331,7 @@ namespace MediaFileRecorder
 			if (FAILED(res))
 			{
 				OutputDebugStringA("Get default render device failed \n");
+				CleanUpSpeaker();
 				return -1;
 			}
 		}
@@ -240,6 +342,7 @@ namespace MediaFileRecorder
 			if (FAILED(res))
 			{
 				OutputDebugStringA("Get render device collection failed \n");
+				CleanUpSpeaker();
 				return -1;
 			}
 
@@ -247,6 +350,7 @@ namespace MediaFileRecorder
 			if (FAILED(res))
 			{
 				OutputDebugStringA("Get render device failed \n");
+				CleanUpSpeaker();
 				return -1;
 			}
 		}
@@ -256,6 +360,7 @@ namespace MediaFileRecorder
 		if (FAILED(res))
 		{
 			OutputDebugStringA("Speaker: Activate audio client failed \n");
+			CleanUpSpeaker();
 			return -1;
 		}
 
@@ -264,17 +369,19 @@ namespace MediaFileRecorder
 		if (FAILED(res))
 		{
 			OutputDebugStringA("Speaker: GetMixFormat failed \n");
+			CleanUpSpeaker();
 			return -1;
 		}
 
 		InitFormat(pWfex, m_SpeakerAudioInfo);
 
-		res = m_pSpeakerAudioClient->Initialize(AUDCLNT_SHAREMODE_SHARED, 
+		res = m_pSpeakerAudioClient->Initialize(AUDCLNT_SHAREMODE_SHARED,
 			AUDCLNT_STREAMFLAGS_LOOPBACK,
 			REFERENCE_TIME_VAL, 0, pWfex, NULL);
 		if (FAILED(res))
 		{
 			OutputDebugStringA("Speaker: Audio client initialize failed \n");
+			CleanUpSpeaker();
 			return -1;
 		}
 
@@ -284,6 +391,7 @@ namespace MediaFileRecorder
 		if (FAILED(res))
 		{
 			OutputDebugStringA("Speaker: get capture service failed \n");
+			CleanUpSpeaker();
 			return -1;
 		}
 
@@ -296,135 +404,11 @@ namespace MediaFileRecorder
 	{
 		if (m_bSpeakerInited)
 		{
-			if (m_bCapturingSpeaker)
-			{
-				StopCaptureSoundCard();
-			}
-			m_pSpeakerCaptureClient.Release();
-			m_pSpeakerAudioClient.Release();
-			m_pSpeakerDev.Release();
-			m_pRenderClient.Release();
+			CleanUpSpeaker();
 			m_bSpeakerInited = false;
 			return 0;
 		}
 		return -1;
-	}
-
-	int CWASAudioCapture::GetMicAudioInfo(AUDIO_INFO& audioInfo)
-	{
-		if (m_bMicInited)
-		{
-			audioInfo = m_MicAudioInfo;
-			return 0;
-		}
-		return -1;
-	}
-
-	int CWASAudioCapture::GetSoundCardAudioInfo(AUDIO_INFO& audioInfo)
-	{
-		if (m_bSpeakerInited)
-		{
-			audioInfo = m_SpeakerAudioInfo;
-			return 0;
-		}
-		return -1;
-	}
-
-	int CWASAudioCapture::StartCaptureMic()
-	{
-		if (!m_bMicInited)
-		{
-			OutputDebugStringA("Mic: not inited \n");
-			return -1;
-		}
-
-		if (m_bCapturingMic)
-		{
-			OutputDebugStringA("Mic: capture already started \n");
-			return -1;
-		}
-
-		HRESULT res = m_pMicAudioClient->Start();
-		if (FAILED(res))
-		{
-			OutputDebugStringA("Mic: start capture failed \n");
-			return -1;
-		}
-
-		m_CaptureMicThread.swap(std::thread(std::bind(&CWASAudioCapture::CaptureMicThreadProc, this)));
-		SetThreadPriority(m_CaptureMicThread.native_handle(), THREAD_PRIORITY_TIME_CRITICAL);
-		m_bCapturingMic = true;
-
-		return 0;
-	}
-
-	int CWASAudioCapture::StopCaptureMic()
-	{
-		if (!m_bCapturingMic)
-		{
-			OutputDebugStringA("Mic: capture hasn't been started");
-			return -1;
-		}
-
-		SetEvent(m_hMicCaptureStopEvent);
-		if (m_CaptureMicThread.joinable())
-		{
-			m_CaptureMicThread.join();
-		}
-
-		m_pMicAudioClient->Stop();
-		m_bCapturingMic = false;
-
-		return 0;
-	}
-
-	int CWASAudioCapture::StartCaptureSoundCard()
-	{
-		if (!m_bSpeakerInited)
-		{
-			OutputDebugStringA("Speaker: not inited \n");
-			return -1;
-		}
-
-		if (m_bCapturingSpeaker)
-		{
-			OutputDebugStringA("Speaker: already captured \n");
-			return -1;
-		}
-
-		HRESULT res = m_pSpeakerAudioClient->Start();
-		if (FAILED(res))
-		{
-			OutputDebugStringA("Speaker: start capture failed \n");
-			return -1;
-		}
-
-		m_CaptureSpeakerThread.swap(std::thread(std::bind(&CWASAudioCapture::CaptureSpeakerThreadProc, this)));
-		SetThreadPriority(m_CaptureSpeakerThread.native_handle(), THREAD_PRIORITY_TIME_CRITICAL);
-		
-		m_bCapturingSpeaker = true;
-
-		return 0;
-	}
-
-	int CWASAudioCapture::StopCaptureSoundCard()
-	{
-		if (!m_bCapturingSpeaker)
-		{
-			OutputDebugStringA("Speaker: capture hasn't been started");
-			return -1;
-		}
-
-		SetEvent(m_hSpeakerCaptureSopEvent);
-		if (m_CaptureSpeakerThread.joinable())
-		{
-			m_CaptureSpeakerThread.join();
-		}
-
-		m_pSpeakerAudioClient->Stop();
-
-		m_bCapturingSpeaker = false;
-		return 0;
 	}
 
 	int CWASAudioCapture::InitFormat(const WAVEFORMATEX* pWfex, AUDIO_INFO& audioInfo)
@@ -497,7 +481,7 @@ namespace MediaFileRecorder
 
 					for (auto iter : m_vecDataCb)
 					{
-						iter->OnCapturedMicData(buffer, frames);
+						iter->OnCapturedMicData(buffer, frames, m_MicAudioInfo);
 					}
 
 					m_pMicCaptureClient->ReleaseBuffer(frames);
@@ -556,7 +540,7 @@ namespace MediaFileRecorder
 
 					for (auto iter : m_vecDataCb)
 					{
-						iter->OnCapturedSoundCardData(buffer, frames);
+						iter->OnCapturedSoundCardData(buffer, frames, m_SpeakerAudioInfo);
 					}
 
 					m_pSpeakerCaptureClient->ReleaseBuffer(frames);
@@ -629,6 +613,21 @@ namespace MediaFileRecorder
 		m_pRenderClient->ReleaseBuffer(frames, 0);
 
 		return 0;
+	}
+
+	void CWASAudioCapture::CleanUpMic()
+	{
+		m_pMicDev.Release();
+		m_pMicAudioClient.Release();
+		m_pMicCaptureClient.Release();
+	}
+
+	void CWASAudioCapture::CleanUpSpeaker()
+	{
+		m_pSpeakerDev.Release();
+		m_pSpeakerAudioClient.Release();
+		m_pSpeakerCaptureClient.Release();
+		m_pRenderClient.Release();
 	}
 
 }

@@ -18,39 +18,32 @@ namespace MediaFileRecorder
 		int RegisterDataCb(IScreenGrabberDataCb* cb) override;
 		int UnRegisterDataCb(IScreenGrabberDataCb* cb) override;
 
-		int SetGrabRect(int left, int top, int right, int bottom) override;
+		int SetGrabRect(const RECT& rect) override;
 		int SetGrabFrameRate(int frame_rate) override;
 
 		int StartGrab() override;
 		int StopGrab() override;
 
 	private:
-		void StartGrabThread();
-		void StopGrabThread();
+		void CleanUp();
+		int StartGrabThread();
+		int StopGrabThread();
 		void GrabThreadProc();
 
-		void CalculateFrameIntervalTick();
-		int64_t GetCurrentTickCount();
-
 	private:
+		std::atomic_bool started_;
+		std::atomic_bool run_;
 		std::vector<IScreenGrabberDataCb*> vec_data_cb_;
+		CRITICAL_SECTION m_sectionDataCb;
 		RECT grab_rect_;
 		int frame_rate_;
-
-		bool started_;
-		std::atomic_bool run_;
+		VIDEO_INFO video_info_;
 		HDC src_dc_;
 		HDC dst_dc_;
 		BITMAPINFO bmi_;
 		HBITMAP hbmp_;
 		void* bmp_buffer_;
 		std::thread grab_thread_;
-
-		LARGE_INTEGER perf_freq_;
-		int64_t last_tick_count_;
-		int64_t frame_interval_tick_;
-
-		HANDLE m_hGrabTimer;
 	};
 }
 

@@ -12,7 +12,7 @@ public:
 	CVideoStatic();
 	virtual ~CVideoStatic();
 	// VideoDevice::IVideoFilter
-	void OnScreenData(void* data, int width, int height, MediaFileRecorder::PIX_FMT pix_fmt) override;
+	void OnScreenData(void* data, const MediaFileRecorder::VIDEO_INFO& videoInfo) override;
 
 	DECLARE_MESSAGE_MAP()
 
