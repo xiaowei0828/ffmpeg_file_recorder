@@ -7,12 +7,15 @@ namespace MediaFileRecorder
 	CScreenAudioRecord::CScreenAudioRecord()
 		:m_nRecordState(NOT_BEGIN)
 	{
+		CoInitialize(NULL);
 		m_pFileRecorder = CreateMediaFileRecorder();
 		m_pScreenGrabber = CreateScreenGrabber();
-		m_pAudioCapturer = CreateAudioCapture();
+		m_pMicAudioCapturer = CreateAudioCapture(MICROPHONE);
+		m_pSpeakerAudioCapturer = CreateAudioCapture(SPEAKER);
 
 		m_pScreenGrabber->RegisterDataCb(this);
-		m_pAudioCapturer->RegisterCaptureDataCb(this);
+		m_pMicAudioCapturer->RegisterCaptureDataCb(this);
+		m_pSpeakerAudioCapturer->RegisterCaptureDataCb(this);
 	}
 
 	CScreenAudioRecord::~CScreenAudioRecord()
@@ -25,7 +28,9 @@ namespace MediaFileRecorder
 		m_pScreenGrabber->UnRegisterDataCb(this);
 		DestroyMediaFileRecorder(m_pFileRecorder);
 		DestroyScreenGrabber(m_pScreenGrabber);
-		DestroyAudioCatpure(m_pAudioCapturer);
+		DestroyAudioCatpure(m_pMicAudioCapturer);
+		DestroyAudioCatpure(m_pSpeakerAudioCapturer);
+		CoUninitialize();
 	}
 
 	int CScreenAudioRecord::SetRecordInfo(const RECORD_INFO& recordInfo)
@@ -94,7 +99,7 @@ namespace MediaFileRecorder
 
 		if (m_stRecordInfo.is_record_mic)
 		{
-			if (m_pAudioCapturer->StartCaptureMic() != 0)
+			if (m_pMicAudioCapturer->StartCapture() != 0)
 			{
 				OutputDebugStringA("Start mic capture failed \n");
 				ret |= START_MIC_CAPTURE_FAILED;
@@ -103,7 +108,7 @@ namespace MediaFileRecorder
 
 		if (m_stRecordInfo.is_record_speaker)
 		{
-			if (m_pAudioCapturer->StartCaptureSoundCard())
+			if (m_pSpeakerAudioCapturer->StartCapture())
 			{
 				OutputDebugStringA("Start speaker capture failed \n");
 				ret |= START_SPEAKER_CAPTURE_FAILED;
@@ -186,28 +191,26 @@ namespace MediaFileRecorder
 		}
 	}
 
-	void CScreenAudioRecord::OnCapturedMicData(const void* audioSamples, int nSamples, 
-		const AUDIO_INFO& audioInfo)
+	void CScreenAudioRecord::OnCapturedData(const void* audioSamples, int nSamples, 
+		DEV_TYPE devType, const AUDIO_INFO& audioInfo)
 	{
 		if (m_nRecordState == RECORDING)
 		{
-			m_pFileRecorder->FillMicAudio(audioSamples, nSamples, audioInfo);
-		}
-	}
-
-	void CScreenAudioRecord::OnCapturedSoundCardData(const void* audioSamples, int nSamples, 
-		const AUDIO_INFO& audioInfo)
-	{
-		if (m_nRecordState == RECORDING)
-		{
-			m_pFileRecorder->FillSpeakerAudio(audioSamples, nSamples, audioInfo);
+			if (devType == MICROPHONE)
+			{
+				m_pFileRecorder->FillMicAudio(audioSamples, nSamples, audioInfo);
+			}
+			else if (devType == SPEAKER)
+			{
+				m_pFileRecorder->FillSpeakerAudio(audioSamples, nSamples, audioInfo);
+			}
 		}
 	}
 
 	void CScreenAudioRecord::CleanUp()
 	{
-		m_pAudioCapturer->StopCaptureSoundCard();
-		m_pAudioCapturer->StopCaptureMic();
+		m_pMicAudioCapturer->StopCapture();
+		m_pSpeakerAudioCapturer->StopCapture();;
 		m_pScreenGrabber->StopGrab();
 		m_pFileRecorder->Stop();
 		m_pFileRecorder->UnInit();

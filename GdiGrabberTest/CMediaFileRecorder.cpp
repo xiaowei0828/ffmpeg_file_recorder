@@ -521,7 +521,7 @@ namespace MediaFileRecorder
 				int64_t pts = (m_nDuration + (timeGetTime() - m_nStartTime)) * m_pAudioCodecCtx->sample_rate / 1000;
 				m_pAudioPacket->pts = pts/*m_nAudioFrameIndex * m_pAudioCodecCtx->frame_size*/;
 				m_pAudioPacket->dts = pts/*m_nAudioFrameIndex * m_pAudioCodecCtx->frame_size*/;
-				m_pAudioPacket->duration = m_pAudioCodecCtx->frame_size;
+				//m_pAudioPacket->duration = m_pAudioCodecCtx->frame_size;
 
 				EnterCriticalSection(&m_WriteFileSection);
 				av_interleaved_write_frame(m_pFormatCtx, m_pAudioPacket);

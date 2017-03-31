@@ -107,9 +107,6 @@
     <ClCompile Include="CMediaFileRecorder.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="CWASAudioCapture.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="base\system_info.cpp">
       <Filter>base</Filter>
     </ClCompile>
@@ -123,6 +120,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CScreenAudioRecord.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CWASAudioCapture.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

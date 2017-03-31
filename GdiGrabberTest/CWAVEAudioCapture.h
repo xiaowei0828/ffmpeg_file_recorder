@@ -22,27 +22,22 @@ namespace MediaFileRecorder
 	class CWAVEAudioCapture : public IAudioCapture
 	{
 	public:
-		CWAVEAudioCapture();
+		CWAVEAudioCapture(DEV_TYPE devType);
 		~CWAVEAudioCapture();
 
 		int RegisterCaptureDataCb(IAudioCaptureDataCb* pDataCb) override;
 		int UnRegisterCaptureDataCb(IAudioCaptureDataCb* pDataCb) override;
-		int SetMic(int index) override;
-		int SetSpeaker(int index) override;
-		int StartCaptureMic() override;
-		int StopCaptureMic() override;
-		int StartCaptureSoundCard() override;
-		int StopCaptureSoundCard() override;
+		int SetDev(int index) override;
+		int StartCapture() override;
+		int StopCapture() override;
 
 	private:
-		int InitMic();
-		int UnInitMic();
-		void CleanUpMic();
-		int InitSpeaker();
-		int UnInitSpeaker();
-		int StartCaptureMicThread();
-		int StopCaptureMicThread();
-		void MicCaptureThreadProc();
+		int InitCapture();
+		int UnInitCapture();
+		void CleanUp();
+		int StartCaptureThread();
+		int StopCaptureThread();
+		void CaptureThreadProc();
 
 		/*static void CapturedDataCb(
 			HWAVEIN   hwi,
@@ -56,19 +51,19 @@ namespace MediaFileRecorder
 			CRITICAL_SECTION m_sectionReturnBuffer;
 			HANDLE m_hReturnBufferEvent;*/
 	private:
-		std::atomic_bool m_bMicInited;
-		std::atomic_bool m_bCapturingMic;
+		DEV_TYPE m_nDevType;
+		std::atomic_bool m_bInited;
+		std::atomic_bool m_bCapturing;
 		std::atomic_bool m_bRunning;
 		std::vector<IAudioCaptureDataCb*> m_vecDataCb;
 		CRITICAL_SECTION m_sectionDataCb;
 		std::thread m_RecordThread;
-		int m_nMicIndex;
-		int m_nSpeakerIndex;
+		int m_nDevIndex;
 
 		HWAVEIN m_hWaveIn;
 		WAVEHDR m_WaveHeaderIn[N_BUFFERS_IN];
 		int8_t m_RecBuffer[N_BUFFERS_IN][4 * REC_BUF_SIZE_IN_SAMPLES];
-		AUDIO_INFO m_MicAudioInfo;
+		AUDIO_INFO m_stAudioInfo;
 	};
 }
 

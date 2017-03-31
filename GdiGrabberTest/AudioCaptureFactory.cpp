@@ -6,17 +6,17 @@
 
 namespace MediaFileRecorder
 {
-	IAudioCapture* CreateAudioCapture()
+	IAudioCapture* CreateAudioCapture(DEV_TYPE devType)
 	{
 		IAudioCapture* pAudioCapture = NULL;
 		SystemInfo systemInfo;
 		if (systemInfo.windows_version() >= SystemInfo::WINDOWS_VISTA)
 		{
-			pAudioCapture = new CWASAudioCapture();
+			pAudioCapture = new CWASAudioCapture(devType);
 		}
 		else
 		{
-			pAudioCapture = new CWAVEAudioCapture();
+			pAudioCapture = new CWAVEAudioCapture(devType);
 		}
 		return pAudioCapture;
 	}

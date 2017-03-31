@@ -23,10 +23,8 @@ namespace MediaFileRecorder
 		int StopRecord() override;
 
 		void OnScreenData(void* data, const VIDEO_INFO& videoInfo) override;
-		void OnCapturedMicData(const void* audioSamples, int nSamples, 
-			const AUDIO_INFO& audioInfo) override;
-		void OnCapturedSoundCardData(const void* audioSamples, int nSamples, 
-			const AUDIO_INFO& audioInfo) override;
+		void OnCapturedData(const void* audioSamples, int nSamples, 
+			DEV_TYPE devType, const AUDIO_INFO& audioInfo) override;
 	private:
 		int CheckRecordInfo();
 		void CleanUp();
@@ -42,7 +40,8 @@ namespace MediaFileRecorder
 		RECORD_INFO m_stRecordInfo;
 		IMediaFileRecorder* m_pFileRecorder;
 		IScreenGrabber* m_pScreenGrabber;
-		IAudioCapture* m_pAudioCapturer;
+		IAudioCapture* m_pMicAudioCapturer;
+		IAudioCapture* m_pSpeakerAudioCapturer;
 	};
 }
 #endif // !CSCREENAUDIORECORD_H

@@ -3,14 +3,14 @@
 
 namespace MediaFileRecorder
 {
-	CWAVEAudioCapture::CWAVEAudioCapture()
-		:m_nMicIndex(-1),
-		m_nSpeakerIndex(-1),
-		m_hWaveIn(NULL)
+	CWAVEAudioCapture::CWAVEAudioCapture(DEV_TYPE devType)
+		:m_nDevType(devType),
+		 m_nDevIndex(-1),
+		 m_hWaveIn(NULL)
 		//m_hReturnBufferEvent(NULL)
 	{
-		m_bMicInited = false;
-		m_bCapturingMic = false;
+		m_bInited = false;
+		m_bCapturing = false;
 		m_bRunning = false;
 		InitializeCriticalSection(&m_sectionDataCb);
 		//InitializeCriticalSection(&m_sectionReturnBuffer);
@@ -18,9 +18,9 @@ namespace MediaFileRecorder
 
 	CWAVEAudioCapture::~CWAVEAudioCapture()
 	{
-		if (m_bCapturingMic)
+		if (m_bCapturing)
 		{
-			StopCaptureMic();
+			StopCapture();
 		}
 	}
 
@@ -50,27 +50,24 @@ namespace MediaFileRecorder
 		return -1;
 	}
 
-	int CWAVEAudioCapture::SetMic(int index)
+	int CWAVEAudioCapture::SetDev(int index)
 	{
-		m_nMicIndex = index;
+		m_nDevIndex = index;
 		return 0;
 	}
 
-	int CWAVEAudioCapture::SetSpeaker(int index)
+	int CWAVEAudioCapture::StartCapture()
 	{
-		m_nSpeakerIndex = index;
-		return 0;
-	}
+		if (m_nDevType == SPEAKER)
+			return -1;
 
-	int CWAVEAudioCapture::StartCaptureMic()
-	{
-		if (m_bCapturingMic)
+		if (m_bCapturing)
 		{
 			OutputDebugStringA("Already running \n");
 			return -1;
 		}
 
-		int ret = InitMic();
+		int ret = InitCapture();
 		if (ret != 0)
 		{
 			OutputDebugStringA("InitMic failed \n");
@@ -87,41 +84,31 @@ namespace MediaFileRecorder
 			return -1;
 		}
 
-		StartCaptureMicThread();
+		StartCaptureThread();
 
-		m_bCapturingMic = true;
+		m_bCapturing = true;
 
 		return 0;
 	}
 
-	int CWAVEAudioCapture::StopCaptureMic()
+	int CWAVEAudioCapture::StopCapture()
 	{
-		if (m_bCapturingMic)
+		if (m_bCapturing)
 		{
-			StopCaptureMicThread();
+			StopCaptureThread();
 			waveInStop(m_hWaveIn);
 			waveInReset(m_hWaveIn);
-			m_bCapturingMic = false;
+			m_bCapturing = false;
 
-			UnInitMic();
+			UnInitCapture();
 			return 0;
 		}
 		return -1;
 	}
 
-	int CWAVEAudioCapture::StartCaptureSoundCard()
+	int CWAVEAudioCapture::InitCapture()
 	{
-		return -1;
-	}
-
-	int CWAVEAudioCapture::StopCaptureSoundCard()
-	{
-		return -1;
-	}
-
-	int CWAVEAudioCapture::InitMic()
-	{
-		if (m_bMicInited)
+		if (m_bInited)
 		{
 			OutputDebugStringA("Mic already inited \n");
 			return -1;
@@ -137,12 +124,12 @@ namespace MediaFileRecorder
 		waveFormat.cbSize = 0;
 
 		HWAVEIN hWaveIn = NULL;
-		uint32_t devID = m_nMicIndex == -1 ? WAVE_MAPPER : (uint32_t)m_nMicIndex;
+		uint32_t devID = m_nDevIndex == -1 ? WAVE_MAPPER : (uint32_t)m_nDevIndex;
 		MMRESULT res = waveInOpen(NULL, devID, &waveFormat, 0, 0, CALLBACK_NULL | WAVE_FORMAT_QUERY);
 		if (res != MMSYSERR_NOERROR)
 		{
 			OutputDebugStringA("waveInOpen failed for query format \n");
-			CleanUpMic();
+			CleanUp();
 			return -1;
 		}
 
@@ -150,30 +137,30 @@ namespace MediaFileRecorder
 		if (res != MMSYSERR_NOERROR)
 		{
 			OutputDebugStringA("Open wave in handle failed \n");
-			CleanUpMic();
+			CleanUp();
 			return -1;
 		}
 
 		if (N_REC_BITS_PER_SAMPLE == 16)
-			m_MicAudioInfo.audio_format = AUDIO_FORMAT_16BIT;
+			m_stAudioInfo.audio_format = AUDIO_FORMAT_16BIT;
 		else if (N_REC_BITS_PER_SAMPLE == 8)
-			m_MicAudioInfo.audio_format = AUDIO_FORMAT_U8BIT;
+			m_stAudioInfo.audio_format = AUDIO_FORMAT_U8BIT;
 		else
 		{
 			OutputDebugStringA("Unsupported bits per sample \n");
-			CleanUpMic();
+			CleanUp();
 			return -1;
 		}
 
-		m_MicAudioInfo.sample_rate = N_REC_SAMPLES_PER_SEC;
+		m_stAudioInfo.sample_rate = N_REC_SAMPLES_PER_SEC;
 		if (waveFormat.nChannels == 1)
-			m_MicAudioInfo.chl_layout = SPEAKERS_MONO;
+			m_stAudioInfo.chl_layout = SPEAKERS_MONO;
 		else if (waveFormat.nChannels == 2)
-			m_MicAudioInfo.chl_layout = SPEAKERS_STEREO;
+			m_stAudioInfo.chl_layout = SPEAKERS_STEREO;
 		else
 		{
 			OutputDebugStringA("Unsupported channels number \n");
-			CleanUpMic();
+			CleanUp();
 			return -1;
 		}
 
@@ -198,7 +185,7 @@ namespace MediaFileRecorder
 			if (res != MMSYSERR_NOERROR)
 			{
 				OutputDebugStringA("waveInPrepareHeader failed \n");
-				CleanUpMic();
+				CleanUp();
 				return -1;
 			}
 
@@ -206,28 +193,28 @@ namespace MediaFileRecorder
 			if (res != MMSYSERR_NOERROR)
 			{
 				OutputDebugStringA("waveInAddBuffer failed \n");
-				CleanUpMic();
+				CleanUp();
 				return -1;
 			}
 		}
 
-		m_bMicInited = true;
+		m_bInited = true;
 		return 0;
 	}
 
-	int CWAVEAudioCapture::UnInitMic()
+	int CWAVEAudioCapture::UnInitCapture()
 	{
-		if (m_bMicInited)
+		if (m_bInited)
 		{
-			CleanUpMic();
-			m_bMicInited = false;
+			CleanUp();
+			m_bInited = false;
 			return 0;
 		}
 		return -1;
 	}
 
 
-	void CWAVEAudioCapture::CleanUpMic()
+	void CWAVEAudioCapture::CleanUp()
 	{
 		if (m_hWaveIn)
 		{
@@ -240,29 +227,19 @@ namespace MediaFileRecorder
 		}
 	}
 
-	int CWAVEAudioCapture::InitSpeaker()
-	{
-		return -1;
-	}
-
-	int CWAVEAudioCapture::UnInitSpeaker()
-	{
-		return -1;
-	}
-
-	int CWAVEAudioCapture::StartCaptureMicThread()
+	int CWAVEAudioCapture::StartCaptureThread()
 	{
 		if (!m_bRunning)
 		{
 			m_bRunning = true;
-			m_RecordThread.swap(std::thread(std::bind(&CWAVEAudioCapture::MicCaptureThreadProc, this)));
+			m_RecordThread.swap(std::thread(std::bind(&CWAVEAudioCapture::CaptureThreadProc, this)));
 			SetThreadPriority(m_RecordThread.native_handle(), THREAD_PRIORITY_TIME_CRITICAL);
 			return 0;
 		}
 		return -1;
 	}
 
-	int CWAVEAudioCapture::StopCaptureMicThread()
+	int CWAVEAudioCapture::StopCaptureThread()
 	{
 		if (m_bRunning)
 		{
@@ -276,7 +253,7 @@ namespace MediaFileRecorder
 		return -1;
 	}
 
-	void CWAVEAudioCapture::MicCaptureThreadProc()
+	void CWAVEAudioCapture::CaptureThreadProc()
 	{
 		HANDLE hWaitableTimer = CreateWaitableTimer(NULL, FALSE, NULL);
 		LARGE_INTEGER fireTime;
@@ -304,7 +281,8 @@ namespace MediaFileRecorder
 					EnterCriticalSection(&m_sectionDataCb);
 					for (IAudioCaptureDataCb* pCb : m_vecDataCb)
 					{
-						pCb->OnCapturedMicData(m_WaveHeaderIn[nBufferIndex].lpData, nSamples, m_MicAudioInfo);
+						pCb->OnCapturedData(m_WaveHeaderIn[nBufferIndex].lpData, nSamples, 
+							m_nDevType, m_stAudioInfo);
 					}
 					LeaveCriticalSection(&m_sectionDataCb);
 
