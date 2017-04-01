@@ -1,6 +1,5 @@
 
 #include "system_info.h"
-#include <windows.h>
 #include <assert.h>
 #include <shlobj.h>
 

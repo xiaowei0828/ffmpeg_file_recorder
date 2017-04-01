@@ -16,6 +16,7 @@ namespace MediaFileRecorder
 		CScreenAudioRecord();
 		~CScreenAudioRecord();
 
+		void SetLogCb();
 		int SetRecordInfo(const RECORD_INFO& recordInfo) override;
 		int StartRecord() override;
 		int SuspendRecord() override;

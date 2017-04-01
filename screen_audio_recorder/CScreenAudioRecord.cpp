@@ -1,13 +1,12 @@
 #include "stdafx.h"
 #include "CScreenAudioRecord.h"
+#include "log.h"
 namespace MediaFileRecorder
 {
-
 
 	CScreenAudioRecord::CScreenAudioRecord()
 		:m_nRecordState(NOT_BEGIN)
 	{
-		CoInitialize(NULL);
 		m_pFileRecorder = CreateMediaFileRecorder();
 		m_pScreenGrabber = CreateScreenGrabber();
 		m_pMicAudioCapturer = CreateAudioCapture(MICROPHONE);
@@ -30,14 +29,13 @@ namespace MediaFileRecorder
 		DestroyScreenGrabber(m_pScreenGrabber);
 		DestroyAudioCatpure(m_pMicAudioCapturer);
 		DestroyAudioCatpure(m_pSpeakerAudioCapturer);
-		CoUninitialize();
 	}
 
 	int CScreenAudioRecord::SetRecordInfo(const RECORD_INFO& recordInfo)
 	{
 		if (m_nRecordState != NOT_BEGIN)
 		{
-			OutputDebugStringA("State not right \n");
+			Error("SetRecordInfo: State not right,state: %d", m_nRecordState);
 			return -1;
 		}
 
@@ -51,7 +49,7 @@ namespace MediaFileRecorder
 		const char* fileName = m_stRecordInfo.file_name;
 		if (strlen(fileName) <= 4 || strcmp(fileName + strlen(fileName) - 4, ".mp4") != 0)
 		{
-			OutputDebugStringA("File name not invalid \n");
+			Error("File name not invalid, file name: %s", fileName);
 			return -1;
 		}
 
@@ -60,22 +58,35 @@ namespace MediaFileRecorder
 			const RECT& captureRect = m_stRecordInfo.video_capture_rect;
 			if (captureRect.Width() <= 0 || captureRect.Height() <= 0)
 			{
-				OutputDebugStringA("Capture rect not right \n");
+				Error("Capture rect not right, left: %d, right: %d, top: %d, bottom: %d",
+					captureRect.left, captureRect.right, captureRect.top, captureRect.bottom);
 				return -1;
 			}
 
 			if (m_stRecordInfo.video_dst_width <= 0 || m_stRecordInfo.video_dst_height <= 0)
 			{
-				OutputDebugStringA("Target width or height not right \n");
+				Error("Target width or height not right, dst width: %d, dst height: %d",
+					m_stRecordInfo.video_dst_width, m_stRecordInfo.video_dst_height);
 				return -1;
 			}
 
 			if (m_stRecordInfo.video_frame_rate <= 0)
 			{
-				OutputDebugStringA("Capture framerate not right \n");
+				Error("Capture framerate not right, frame_rate: %d", m_stRecordInfo.video_frame_rate);
 				return -1;
 			}
 		}
+
+		const RECT& captureRect = m_stRecordInfo.video_capture_rect;
+		Info("Record Info: record video: %d, record mic: %d, record speaker: %d; "
+			"capture_rect: left: %d, right: %d, top: %d, bottom: %d; frame_rate: %d;"
+			"dst width: %d, dst height: %d; quality: %d; file_name %s",
+			m_stRecordInfo.is_record_video, m_stRecordInfo.is_record_mic, 
+			m_stRecordInfo.is_record_speaker, captureRect.left, captureRect.right,
+			captureRect.top, captureRect.bottom, m_stRecordInfo.video_frame_rate, 
+			m_stRecordInfo.video_dst_width, m_stRecordInfo.video_dst_height,
+			m_stRecordInfo.quality, m_stRecordInfo.file_name);
+		
 		return 0;
 
 	}
@@ -85,14 +96,14 @@ namespace MediaFileRecorder
 		int ret = 0;
 		if (m_nRecordState != NOT_BEGIN)
 		{
-			OutputDebugStringA("State not right");
+			Error("StartRecord: State not right, state: %d", m_nRecordState);
 			ret |= STATE_NOT_RIGHT;
 			return ret;
 		}
 
 		if (CheckRecordInfo() != 0)
 		{
-			OutputDebugStringA("Parameter invalid \n");
+			Error("Parameter invalid");
 			ret |= PARAMETER_INVALID;
 			return ret;
 		}
@@ -101,7 +112,7 @@ namespace MediaFileRecorder
 		{
 			if (m_pMicAudioCapturer->StartCapture() != 0)
 			{
-				OutputDebugStringA("Start mic capture failed \n");
+				Error("Start mic capture failed");
 				ret |= START_MIC_CAPTURE_FAILED;
 			}
 		}
@@ -110,7 +121,7 @@ namespace MediaFileRecorder
 		{
 			if (m_pSpeakerAudioCapturer->StartCapture())
 			{
-				OutputDebugStringA("Start speaker capture failed \n");
+				Error("Start speaker capture failed");
 				ret |= START_SPEAKER_CAPTURE_FAILED;
 			}
 		}
@@ -122,14 +133,14 @@ namespace MediaFileRecorder
 
 			if (m_pScreenGrabber->StartGrab() != 0)
 			{
-				OutputDebugStringA("Start screen capture failed \n");
+				Error("Start screen capture failed");
 				ret |= START_SCRREEN_CAPTURE_FAILED;
 			}
 		}
 
 		if (m_pFileRecorder->Init(m_stRecordInfo) != 0)
 		{
-			OutputDebugStringA("Init media file recorder failed \n");
+			Error("Init media file recorder failed");
 			ret |= INIT_MEDIA_FILE_RECORDER_FAILED;
 			CleanUp();
 			return ret;
@@ -137,7 +148,7 @@ namespace MediaFileRecorder
 		
 		if (m_pFileRecorder->Start() != 0)
 		{
-			OutputDebugStringA("Start media file recorder failed \n");
+			Error("Start media file recorder failed");
 			ret |= START_MEDIA_FILE_RECORDER_FAILED;
 			CleanUp();
 			return ret;
@@ -152,7 +163,7 @@ namespace MediaFileRecorder
 	{
 		if (m_nRecordState != RECORDING)
 		{
-			OutputDebugStringA("State not right \n");
+			Error("SuspendRecord: State not right, state: %d", m_nRecordState);
 			return -1;
 		}
 		m_nRecordState = SUSPENDED;
@@ -163,7 +174,7 @@ namespace MediaFileRecorder
 	{
 		if (m_nRecordState != SUSPENDED)
 		{
-			OutputDebugStringA("State not right \n");
+			Error("ResumeRecord: State not right,state: %d", m_nRecordState);
 			return -1;
 		}
 		m_nRecordState = RECORDING;
@@ -174,7 +185,7 @@ namespace MediaFileRecorder
 	{
 		if (m_nRecordState == NOT_BEGIN)
 		{
-			OutputDebugStringA("State not right \n");
+			Error("StopRecord: State not right,state: %d", m_nRecordState);
 			return -1;
 		}
 
@@ -225,5 +236,10 @@ namespace MediaFileRecorder
 	void DestroyScreenAudioRecorder(IScreenAudioRecord* pRecorder)
 	{
 		delete pRecorder;
+	}
+
+	void SetLogCallback(sdk_log_cb_t cb)
+	{
+		set_log_func(cb);
 	}
 }

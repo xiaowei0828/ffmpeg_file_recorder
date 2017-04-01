@@ -11,6 +11,7 @@ extern "C"
 #include "libavdevice/avdevice.h"
 #include "libavutil/audio_fifo.h"
 #include "libswresample/swresample.h"
+#include "libavutil/imgutils.h"
 
 #pragma comment(lib, "avcodec.lib")
 #pragma comment(lib, "avformat.lib")

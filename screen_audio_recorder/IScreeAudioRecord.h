@@ -3,6 +3,12 @@
 
 #include "MediaRecordTypeDef.h"
 
+#ifdef SCREEN_AUDIO_RECORDER_EXPORTS
+#define RECORDAPI __declspec(dllexport)
+#else
+#define RECORDAPI __declspec(dllimport)
+#endif
+
 namespace MediaFileRecorder
 {
 	class IScreenAudioRecord
@@ -17,8 +23,10 @@ namespace MediaFileRecorder
 		virtual ~IScreenAudioRecord(){}
 	};
 
-	IScreenAudioRecord* CreateScreenAudioRecorder();
-	void DestroyScreenAudioRecorder(IScreenAudioRecord* pRecorder);
+
+	RECORDAPI void SetLogCallback(sdk_log_cb_t cb);
+	RECORDAPI IScreenAudioRecord* CreateScreenAudioRecorder();
+	RECORDAPI void DestroyScreenAudioRecorder(IScreenAudioRecord* pRecorder);
 }
 
 #endif

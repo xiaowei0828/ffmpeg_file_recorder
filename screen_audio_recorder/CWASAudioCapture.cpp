@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "CWASAudioCapture.h"
+#include "log.h"
 
 #define KSAUDIO_SPEAKER_4POINT1 (KSAUDIO_SPEAKER_QUAD|SPEAKER_LOW_FREQUENCY)
 #define KSAUDIO_SPEAKER_2POINT1 (KSAUDIO_SPEAKER_STEREO|SPEAKER_LOW_FREQUENCY)
@@ -87,21 +88,21 @@ namespace MediaFileRecorder
 	{
 		if (m_bCapturing)
 		{
-			OutputDebugStringA("Capture already started \n");
+			Error("CWASAudioCapture: Capture already started");
 			return -1;
 		}
 
 		int ret = InitCapture();
 		if (ret != 0)
 		{
-			OutputDebugStringA("InitCapture failed \n");
+			Error("CWASAudioCapture: InitCapture failed");
 			return -1;
 		}
 
 		HRESULT res = m_pAudioClient->Start();
 		if (FAILED(res))
 		{
-			OutputDebugStringA("Start capture failed \n");
+			Error("CWASAudioCapture: Start capture failed");
 			UnInitCapture();
 			return -1;
 		}
@@ -121,12 +122,13 @@ namespace MediaFileRecorder
 			SetEvent(m_hCaptureStopEvent);
 			WaitForSingleObject(m_hReconnectThread, INFINITE);
 			ResetEvent(m_hCaptureStopEvent);
+			Warning("CWASAudioCapture: Stop Reconnecting");
 			return 0;
 		}
 
 		if (!m_bCapturing)
 		{
-			OutputDebugStringA("Capture hasn't been started");
+			Error("CWASAudioCapture: Capture hasn't been started");
 			return -1;
 		}
 
@@ -146,11 +148,13 @@ namespace MediaFileRecorder
 	{
 		if (m_bInited)
 		{
-			OutputDebugStringA("Already inited \n");
+			Error("CWASAudioCapture: Already inited \n");
 			return -1;
 		}
 
 		CoInitialize(NULL);
+
+		Info("CWASAudioCapture: InitCapture, type: %d", m_nDevType);
 
 		CComPtr<IMMDeviceEnumerator> enumerator;
 		HRESULT res;
@@ -159,7 +163,7 @@ namespace MediaFileRecorder
  			NULL, CLSCTX_ALL);
 		if (FAILED(res))
 		{
-			OutputDebugStringA("Create IMMDeviceEnumerator failed \n");
+			Error("Create IMMDeviceEnumerator failed, res: %d", res);
 			return -1;
 		}
 
@@ -174,7 +178,7 @@ namespace MediaFileRecorder
 			res = enumerator->GetDefaultAudioEndpoint(dataFlow, eConsole, &m_pDev);
 			if (FAILED(res))
 			{
-				OutputDebugStringA("Get default capture device failed \n");
+				Error("CWASAudioCapture: Get default capture device failed, res: %d", res);
 				CleanUp();
 				return -1;
 			}
@@ -185,7 +189,7 @@ namespace MediaFileRecorder
 			res = enumerator->EnumAudioEndpoints(dataFlow, DEVICE_STATE_ACTIVE, &pDevCollection);
 			if (FAILED(res))
 			{
-				OutputDebugStringA("Get device collection failed \n");
+				Error("CWASAudioCapture: Get device collection failed, res: %d", res);
 				CleanUp();
 				return -1;
 			}
@@ -193,7 +197,8 @@ namespace MediaFileRecorder
 			res = pDevCollection->Item(m_nDevIndex, &m_pDev);
 			if (FAILED(res))
 			{
-				OutputDebugStringA("Get device failed \n");
+				Error("CWASAudioCapture: Get device failed, res: %d, index: %d",
+					res, m_nDevIndex);
 				CleanUp();
 				return -1;
 			}
@@ -203,7 +208,7 @@ namespace MediaFileRecorder
 			NULL, (void**)&m_pAudioClient);
 		if (FAILED(res))
 		{
-			OutputDebugStringA("Activate audio client failed \n");
+			Error("CWASAudioCapture: Activate audio client failed, res: %d", res);
 			CleanUp();
 			return -1;
 		}
@@ -212,7 +217,7 @@ namespace MediaFileRecorder
 		res = m_pAudioClient->GetMixFormat(&pWfex);
 		if (FAILED(res))
 		{
-			OutputDebugStringA("GetMixFormat failed \n");
+			Error("CWASAudioCapture: GetMixFormat failed, res: %d", res);
 			CleanUp();
 			return -1;
 		}
@@ -227,7 +232,7 @@ namespace MediaFileRecorder
 			REFERENCE_TIME_VAL, 0, pWfex, NULL);
 		if (FAILED(res))
 		{
-			OutputDebugStringA("Audio client initialize failed \n");
+			Error("CWASAudioCapture: Audio client initialize failed, res: %d");
 			CleanUp();
 			return -1;
 		}
@@ -238,7 +243,7 @@ namespace MediaFileRecorder
 		res = m_pAudioClient->GetService(__uuidof(IAudioCaptureClient), (void**)&m_pCaptureClient);
 		if (FAILED(res))
 		{
-			OutputDebugStringA("Get capture service failed \n");
+			Error("CWASAudioCapture: Get capture service failed, res: %d", res);
 			CleanUp();
 			return -1;
 		}
@@ -246,7 +251,7 @@ namespace MediaFileRecorder
 		res = m_pAudioClient->SetEventHandle(m_hCaptureReadyEvent);
 		if (FAILED(res))
 		{
-			OutputDebugStringA("SetEventHandle failed \n");
+			Error("CWASAudioCapture: SetEventHandle failed, res: %d", res);
 			CleanUp();
 			return -1;
 		}
@@ -281,14 +286,14 @@ namespace MediaFileRecorder
 			nullptr, (void**)&client);
 		if (FAILED(res))
 		{
-			OutputDebugStringA("InitRender: failed to activate audio client");
+			Error("InitRender: failed to activate audio client, res: %d", res);
 			return -1;
 		}
 
 		res = client->GetMixFormat(&wfex);
 		if (FAILED(res))
 		{
-			OutputDebugStringA("InitRender: failed to get mix format");
+			Error("InitRender: failed to get mix format, res: %d", res);
 			return -1;
 		}
 
@@ -297,7 +302,7 @@ namespace MediaFileRecorder
 			REFERENCE_TIME_VAL, 0, wfex, nullptr);
 		if (FAILED(res))
 		{
-			OutputDebugStringA("InitRender: failed to initialize audio client");
+			Error("InitRender: failed to initialize audio client, res: %d", res);
 			return -1;
 		}
 
@@ -308,7 +313,7 @@ namespace MediaFileRecorder
 		res = client->GetBufferSize(&frames);
 		if (FAILED(res))
 		{
-			OutputDebugStringA("InitRender: audio client get buffer size failed \n");
+			Error("InitRender: audio client get buffer size failed, res: %d", res);
 			return -1;
 		}
 
@@ -316,14 +321,14 @@ namespace MediaFileRecorder
 			(void**)&m_pRenderClient);
 		if (FAILED(res))
 		{
-			OutputDebugStringA("InitRender: audio client get render service failed");
+			Error("InitRender: audio client get render service failed, res: %d", res);
 			return -1;
 		}
 
 		res = m_pRenderClient->GetBuffer(frames, &buffer);
 		if (FAILED(res))
 		{
-			OutputDebugStringA("InitRender: render client get buffer failed");
+			Error("InitRender: render client get buffer failed, res: %d", res);
 			return -1;
 		}
 
@@ -383,13 +388,14 @@ namespace MediaFileRecorder
 			DWORD result = WaitForMultipleObjects(2, waitArray, FALSE, dwDuration);
 			if (result == WAIT_OBJECT_0)
 			{
-				OutputDebugStringA("Capture Thread: receive stop signal, stop the thread \n");
+				Info("Capture Thread: receive stop signal, stop the thread, dev_type: %d", m_nDevType);
 				break;
 			}
 			else if (result == WAIT_OBJECT_0 + 1 || result == WAIT_TIMEOUT)
 			{
 				if (ProcessCaptureData() != 0)
 				{
+					Error("ProcessCaptureData failed, devType: %d", m_nDevType);
 					bReconnect = true;
 					break;
 				}
@@ -397,6 +403,7 @@ namespace MediaFileRecorder
 		}
 		if (bReconnect)
 		{
+			Warning("Start reconnecting, devType: %d", m_nDevType);
 			m_hReconnectThread = CreateThread(NULL, 0, &CWASAudioCapture::ReconnectThread,
 				(LPVOID)this, 0, NULL);
 		}
@@ -411,13 +418,13 @@ namespace MediaFileRecorder
 			DWORD result = WaitForSingleObject(m_hCaptureStopEvent, RECONNECT_INTERVAL);
 			if (result == WAIT_OBJECT_0)
 			{
-				OutputDebugStringA("Reconnect thread: Receive stop signal,exit \n");
+				Info("Reconnect thread: Receive stop signal,exit,devType: %d", m_nDevType);
 				break;
 			}
 			if (StartCapture() == 0)
 			{
 				m_bReconnecting = false;
-				OutputDebugStringA("Reconnect succeed! \n");
+				Info("Reconnect succeed!, devType: %d", m_nDevType);
 				break;
 			}
 		}
@@ -437,7 +444,8 @@ namespace MediaFileRecorder
 			res = m_pCaptureClient->GetNextPacketSize(&captureSize);
 			if (FAILED(res))
 			{
-				OutputDebugStringA("Mic Thread: some exception occurs during get next pakect size, thread exit \n");
+				Error("Mic Thread: some exception occurs during get next pakect size, thread exit,res: %d, devType: %d", 
+					res, m_nDevType);
 				ret = -1;
 				break;
 			}
@@ -447,7 +455,8 @@ namespace MediaFileRecorder
 			res = m_pCaptureClient->GetBuffer(&buffer, &frames, &flags, &pos, &ts);
 			if (FAILED(res))
 			{
-				OutputDebugStringA("Mic Thread: some exception occurs during get buffer, thread exit");
+				Error("Mic Thread: some exception occurs during get buffer, thread exit, res: %d, devType: %d",
+					res, m_nDevType);
 				ret = -1;
 				break;
 			}

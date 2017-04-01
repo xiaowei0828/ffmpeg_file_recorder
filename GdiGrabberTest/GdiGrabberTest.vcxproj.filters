@@ -16,9 +16,6 @@
     <Filter Include="base">
       <UniqueIdentifier>{49cf4550-6ba1-4496-81f8-0ffb33152c0e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="interface">
-      <UniqueIdentifier>{5c16de0b-c193-435c-9c10-b97264cd0a0a}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -39,46 +36,10 @@
     <ClInclude Include="Resource.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="dib.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="VideoStatic.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="CScreenDXGrabber.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CScreenGdiGrabber.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CMediaFileRecorder.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CWASAudioCapture.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="base\system_info.h">
-      <Filter>base</Filter>
-    </ClInclude>
-    <ClInclude Include="IAudioCapture.h">
-      <Filter>interface</Filter>
-    </ClInclude>
-    <ClInclude Include="IScreenGrabber.h">
-      <Filter>interface</Filter>
-    </ClInclude>
-    <ClInclude Include="IMediaFileRecorder.h">
-      <Filter>interface</Filter>
-    </ClInclude>
-    <ClInclude Include="CWAVEAudioCapture.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="IScreeAudioRecord.h">
-      <Filter>interface</Filter>
-    </ClInclude>
-    <ClInclude Include="MediaRecordTypeDef.h">
-      <Filter>interface</Filter>
-    </ClInclude>
-    <ClInclude Include="CScreenAudioRecord.h">
+    <ClInclude Include="dib.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -96,33 +57,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="VideoStatic.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="CScreenDXGrabber.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="CScreenGdiGrabber.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="CMediaFileRecorder.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="base\system_info.cpp">
-      <Filter>base</Filter>
-    </ClCompile>
-    <ClCompile Include="ScreenGrabberFactory.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="AudioCaptureFactory.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="CWAVEAudioCapture.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="CScreenAudioRecord.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="CWASAudioCapture.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "CScreenGdiGrabber.h"
 #include <MMSystem.h>
+#include "log.h"
 
 namespace MediaFileRecorder {
 
@@ -73,7 +74,7 @@ namespace MediaFileRecorder {
 	{
 		if (started_)
 		{
-			OutputDebugStringA("Already started");
+			Error("CScreenGdiGrabber: Already started");
 			return -1;
 		}
 
@@ -98,7 +99,7 @@ namespace MediaFileRecorder {
 		hbmp_ = CreateDIBSection(dst_dc_, &bmi_, DIB_RGB_COLORS, &bmp_buffer_, NULL, 0);
 		if (!hbmp_)
 		{
-			OutputDebugStringA("Create DIB section failed");
+			Error("Create DIB section failed");
 			CleanUp();
 			return -1;
 		}

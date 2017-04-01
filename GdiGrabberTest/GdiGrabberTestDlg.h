@@ -6,7 +6,6 @@
 #include "afxwin.h"
 #include "VideoStatic.h"
 #include <memory>
-#include "IScreeAudioRecord.h"
 
 // CGdiGrabberTestDlg 对话框
 class CGdiGrabberTestDlg : public CDialogEx
@@ -20,10 +19,6 @@ public:
 
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
-
-public:
-
-	int64_t ConvertToAVChannelLayOut(MediaFileRecorder::CHANNEL_LAYOUT channel_lay_out);
 
 // 实现
 protected:
@@ -40,7 +35,8 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	CVideoStatic m_StaticPic;
-	MediaFileRecorder::IScreenAudioRecord* m_pRecorder;
+	//MediaFileRecorder::IScreenAudioRecord* m_pRecorder;
+	void* m_pRecorder;
 
 	bool record_started_;
 	bool record_interrupt_;
@@ -48,7 +44,4 @@ private:
 	int64_t start_capture_time_;
 
 	int64_t duration_;
-
-	MediaFileRecorder::AUDIO_INFO mic_audio_info_;
-	MediaFileRecorder::AUDIO_INFO speaker_audio_info_;
 };

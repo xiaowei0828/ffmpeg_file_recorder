@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "CScreenDXGrabber.h"
 #include <MMSystem.h>
+#include "log.h"
 
 namespace MediaFileRecorder
 {
@@ -72,7 +73,7 @@ namespace MediaFileRecorder
 	{
 		if (started_)
 		{
-			OutputDebugStringA("Already started \n");
+			Error("CScreenDXGrabber: Already started");
 			return -1;
 		}
 
@@ -81,7 +82,7 @@ namespace MediaFileRecorder
 
 		if (!InitD3D())
 		{
-			OutputDebugStringA("InitD3D failed \n");
+			Error("InitD3D failed");
 			return false;
 		}
 
@@ -109,13 +110,13 @@ namespace MediaFileRecorder
 		d3d9_ptr_ = Direct3DCreate9(D3D_SDK_VERSION);
 		if (d3d9_ptr_ == NULL)
 		{
-			OutputDebugStringA("Create d3d9 failed\n");
+			Error("Create d3d9 failed");
 			return false;
 		}
 
 		if (FAILED(d3d9_ptr_->GetAdapterDisplayMode(D3DADAPTER_DEFAULT, &ddm)))
 		{
-			OutputDebugStringA("GetAdapterDisplayMode failed");
+			Error("GetAdapterDisplayMode failed");
 			return false;
 		}
 
@@ -133,13 +134,13 @@ namespace MediaFileRecorder
 		d3dpp.FullScreen_RefreshRateInHz = D3DPRESENT_RATE_DEFAULT;
 		if (FAILED(d3d9_ptr_->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, NULL, D3DCREATE_HARDWARE_VERTEXPROCESSING, &d3dpp, &d3d_dev_ptr_)))
 		{
-			OutputDebugStringA("CreateDevice failed \n");
+			Error("CreateDevice failed");
 			return false;
 		}
 
 		if (FAILED(d3d_dev_ptr_->CreateOffscreenPlainSurface(ddm.Width, ddm.Height, D3DFMT_A8R8G8B8, D3DPOOL_SCRATCH, &d3d_surface_ptr_, NULL)))
 		{
-			OutputDebugStringA("CreateOffscreenPlainSurface failed");
+			Error("CreateOffscreenPlainSurface failed");
 			return false;
 		}
 
@@ -202,9 +203,7 @@ namespace MediaFileRecorder
 			d3d_surface_ptr_->UnlockRect();
 
 			int64_t duration = timeGetTime() - begin_time;
-			char log[128] = { 0 };
-			sprintf_s(log, "DX capture interval: %lld \n", duration);
-			OutputDebugStringA(log);
+			Debug("DX capture interval: %lld", duration);
 		}
 	}
 

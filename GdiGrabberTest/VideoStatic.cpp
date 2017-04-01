@@ -25,31 +25,6 @@ BEGIN_MESSAGE_MAP(CVideoStatic, CStatic)
 	ON_WM_PAINT()
 END_MESSAGE_MAP()
 
-void CVideoStatic::OnScreenData(void* data, const MediaFileRecorder::VIDEO_INFO& videoInfo)
-{
-	return;
-	if (width_ != videoInfo.width || height_ != videoInfo.height)
-	{
-		if (dib_.is_valid())
-		{
-			dib_.destroy();
-		}
-		dib_.create(videoInfo.width, videoInfo.height);
-		width_ = videoInfo.width;
-		height_ = videoInfo.height;
-	}
-
-	int srcWidth = dib_.get_width();
-	int srcHeight = dib_.get_height();
-	dib_.set_dib_bits((void*)data, width_ * height_* 3);
-	/*if (mem_dc_)
-	{
-	dib_.stretch_blt(mem_dc_, 0, 0, rect_.Width(), rect_.Height(),
-	0, 0, srcWidth, srcHeight);
-	}*/
-
-	Invalidate(FALSE);
-}
 
 void CVideoStatic::OnPaint()
 {

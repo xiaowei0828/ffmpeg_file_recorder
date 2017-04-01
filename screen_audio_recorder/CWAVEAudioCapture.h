@@ -37,6 +37,7 @@ namespace MediaFileRecorder
 		void CleanUp();
 		int StartCaptureThread();
 		int StopCaptureThread();
+		static DWORD WINAPI CaptureThread(LPVOID param);
 		void CaptureThreadProc();
 
 		/*static void CapturedDataCb(
@@ -57,7 +58,7 @@ namespace MediaFileRecorder
 		std::atomic_bool m_bRunning;
 		std::vector<IAudioCaptureDataCb*> m_vecDataCb;
 		CRITICAL_SECTION m_sectionDataCb;
-		std::thread m_RecordThread;
+		HANDLE m_hRecordThread;
 		int m_nDevIndex;
 
 		HWAVEIN m_hWaveIn;

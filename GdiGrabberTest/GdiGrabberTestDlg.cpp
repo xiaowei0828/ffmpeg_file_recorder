@@ -7,6 +7,7 @@
 #include "GdiGrabberTestDlg.h"
 #include "afxdialogex.h"
 #include <MMSystem.h>
+#include "../screen_audio_recorder/IScreenAudioRecord_C.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -45,7 +46,15 @@ END_MESSAGE_MAP()
 
 // CGdiGrabberTestDlg 对话框
 
-
+void recorder_log_cb(MediaFileRecorder::SDK_LOG_LEVEL level, const wchar_t* msg)
+{
+	if (level >= MediaFileRecorder::LOG_INFO)
+	{
+		OutputDebugString(msg);
+		OutputDebugString(L"\n");
+	}
+	
+}
 
 CGdiGrabberTestDlg::CGdiGrabberTestDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CGdiGrabberTestDlg::IDD, pParent)
@@ -118,7 +127,10 @@ BOOL CGdiGrabberTestDlg::OnInitDialog()
 
 	// TODO:  在此添加额外的初始化代码
 
-	m_pRecorder = MediaFileRecorder::CreateScreenAudioRecorder();
+	//m_pRecorder = MediaFileRecorder::CreateScreenAudioRecorder();
+	//MediaFileRecorder::SetLogCallback(recorder_log_cb);
+	m_pRecorder = MR_CreateScreenAudioRecorder();
+	MR_SetLogCallBack(recorder_log_cb);
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -188,7 +200,7 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 
 		MediaFileRecorder::RECORD_INFO record_info;
 		
-		strcpy_s(record_info.file_name, "test.mp4");
+		//strcpy_s(record_info.file_name, "test.mp4");
 		record_info.video_capture_rect = grab_rect;
 		record_info.video_dst_width = CAPTURE_WIDTH;
 		record_info.video_dst_height = CAPTURE_HEIGHT;
@@ -198,8 +210,10 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 		record_info.is_record_video = true;
 		record_info.is_record_mic = true;
 
-		int ret = m_pRecorder->SetRecordInfo(record_info);
-		ret = m_pRecorder->StartRecord();
+		/*int ret = m_pRecorder->SetRecordInfo(record_info);
+		ret = m_pRecorder->StartRecord();*/
+		int ret = MR_SetRecordInfo(m_pRecorder, record_info);
+		ret = MR_StartRecord(m_pRecorder);
 
 		record_started_ = true;
 		m_ButtonStart.SetWindowTextW(L"停止");
@@ -209,7 +223,7 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 	else
 	{
 		record_started_ = false;
-		m_pRecorder->StopRecord();
+		MR_StopRecord(m_pRecorder);
 		m_ButtonStart.SetWindowTextW(L"开始");
 
 		if (!record_interrupt_)
@@ -226,7 +240,7 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 void CGdiGrabberTestDlg::OnClose()
 {
 	// TODO:  在此添加消息处理程序代码和/或调用默认
-	MediaFileRecorder::DestroyScreenAudioRecorder(m_pRecorder);
+	MR_DestroyScreenAudioRecorder(m_pRecorder);
 	CDialogEx::OnClose();
 }
 
@@ -238,7 +252,7 @@ void CGdiGrabberTestDlg::OnBnClickedButtonInterrupt()
 	{
 		if (!record_interrupt_)
 		{
-			m_pRecorder->SuspendRecord();
+			MR_SuspendRecord(m_pRecorder);
 			record_interrupt_ = true;
 			GetDlgItem(IDC_BUTTON_INTERRUPT)->SetWindowTextW(L"继续");
 
@@ -249,7 +263,7 @@ void CGdiGrabberTestDlg::OnBnClickedButtonInterrupt()
 		}
 		else
 		{
-			m_pRecorder->ResumeRecord();
+			MR_ResumeRecord(m_pRecorder);
 			start_capture_time_ = timeGetTime();
 			record_interrupt_ = false;
 			GetDlgItem(IDC_BUTTON_INTERRUPT)->SetWindowTextW(L"暂停");

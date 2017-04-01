@@ -11,6 +11,7 @@
 #include <vector>
 #include <atomic>
 #include <thread>
+#include <atlbase.h>
 
 namespace MediaFileRecorder
 {

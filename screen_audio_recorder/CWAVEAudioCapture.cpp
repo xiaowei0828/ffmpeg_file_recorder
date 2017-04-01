@@ -1,13 +1,14 @@
 #include "stdafx.h"
 #include "CWAVEAudioCapture.h"
+#include "log.h"
 
 namespace MediaFileRecorder
 {
 	CWAVEAudioCapture::CWAVEAudioCapture(DEV_TYPE devType)
 		:m_nDevType(devType),
 		 m_nDevIndex(-1),
-		 m_hWaveIn(NULL)
-		//m_hReturnBufferEvent(NULL)
+		 m_hWaveIn(NULL),
+		 m_hRecordThread(NULL)
 	{
 		m_bInited = false;
 		m_bCapturing = false;
@@ -63,14 +64,14 @@ namespace MediaFileRecorder
 
 		if (m_bCapturing)
 		{
-			OutputDebugStringA("Already running \n");
+			Error("CWAVEAudioCapture: Already running");
 			return -1;
 		}
 
 		int ret = InitCapture();
 		if (ret != 0)
 		{
-			OutputDebugStringA("InitMic failed \n");
+			Error("CWAVEAudioCapture: InitMic failed");
 			return -1;
 		}
 
@@ -80,7 +81,7 @@ namespace MediaFileRecorder
 		MMRESULT res = waveInStart(m_hWaveIn);
 		if (res != MMSYSERR_NOERROR)
 		{
-			OutputDebugStringA("waveInStart failed \n");
+			Error("CWAVEAudioCapture: waveInStart failed");
 			return -1;
 		}
 
@@ -110,7 +111,7 @@ namespace MediaFileRecorder
 	{
 		if (m_bInited)
 		{
-			OutputDebugStringA("Mic already inited \n");
+			Error("CWAVEAudioCapture: Mic already inited");
 			return -1;
 		}
 
@@ -128,7 +129,7 @@ namespace MediaFileRecorder
 		MMRESULT res = waveInOpen(NULL, devID, &waveFormat, 0, 0, CALLBACK_NULL | WAVE_FORMAT_QUERY);
 		if (res != MMSYSERR_NOERROR)
 		{
-			OutputDebugStringA("waveInOpen failed for query format \n");
+			Error("CWAVEAudioCapture: waveInOpen failed for query format, res: %d", res);
 			CleanUp();
 			return -1;
 		}
@@ -136,21 +137,13 @@ namespace MediaFileRecorder
 		res = waveInOpen(&hWaveIn, devID, &waveFormat, NULL, NULL, CALLBACK_NULL);
 		if (res != MMSYSERR_NOERROR)
 		{
-			OutputDebugStringA("Open wave in handle failed \n");
+			Error("CWAVEAudioCapture: Open wave in handle failed,res: %d");
 			CleanUp();
 			return -1;
 		}
 
-		if (N_REC_BITS_PER_SAMPLE == 16)
-			m_stAudioInfo.audio_format = AUDIO_FORMAT_16BIT;
-		else if (N_REC_BITS_PER_SAMPLE == 8)
-			m_stAudioInfo.audio_format = AUDIO_FORMAT_U8BIT;
-		else
-		{
-			OutputDebugStringA("Unsupported bits per sample \n");
-			CleanUp();
-			return -1;
-		}
+		
+		m_stAudioInfo.audio_format = AUDIO_FORMAT_16BIT;
 
 		m_stAudioInfo.sample_rate = N_REC_SAMPLES_PER_SEC;
 		if (waveFormat.nChannels == 1)
@@ -159,7 +152,8 @@ namespace MediaFileRecorder
 			m_stAudioInfo.chl_layout = SPEAKERS_STEREO;
 		else
 		{
-			OutputDebugStringA("Unsupported channels number \n");
+			Error("CWAVEAudioCapture: Unsupported channels number, chl_number: %d",
+				waveFormat.nChannels);
 			CleanUp();
 			return -1;
 		}
@@ -184,7 +178,7 @@ namespace MediaFileRecorder
 			res = waveInPrepareHeader(m_hWaveIn, &m_WaveHeaderIn[n], sizeof(WAVEHDR));
 			if (res != MMSYSERR_NOERROR)
 			{
-				OutputDebugStringA("waveInPrepareHeader failed \n");
+				Error("CWAVEAudioCapture: waveInPrepareHeader failed");
 				CleanUp();
 				return -1;
 			}
@@ -192,7 +186,7 @@ namespace MediaFileRecorder
 			res = waveInAddBuffer(m_hWaveIn, &m_WaveHeaderIn[n], sizeof(WAVEHDR));
 			if (res != MMSYSERR_NOERROR)
 			{
-				OutputDebugStringA("waveInAddBuffer failed \n");
+				Error("CWAVEAudioCapture: waveInAddBuffer failed");
 				CleanUp();
 				return -1;
 			}
@@ -232,8 +226,8 @@ namespace MediaFileRecorder
 		if (!m_bRunning)
 		{
 			m_bRunning = true;
-			m_RecordThread.swap(std::thread(std::bind(&CWAVEAudioCapture::CaptureThreadProc, this)));
-			SetThreadPriority(m_RecordThread.native_handle(), THREAD_PRIORITY_TIME_CRITICAL);
+			m_hRecordThread = CreateThread(NULL, 0, &CWAVEAudioCapture::CaptureThread, (LPVOID)this,
+				0, NULL);
 			return 0;
 		}
 		return -1;
@@ -244,14 +238,23 @@ namespace MediaFileRecorder
 		if (m_bRunning)
 		{
 			m_bRunning = false;
-			if (m_RecordThread.joinable())
-			{
-				m_RecordThread.join();
-			}
+			WaitForSingleObject(m_hRecordThread, INFINITE);
+			m_hRecordThread = NULL;
 			return 0;
 		}
 		return -1;
 	}
+
+	DWORD WINAPI CWAVEAudioCapture::CaptureThread(LPVOID param)
+	{
+		CWAVEAudioCapture* pThis = (CWAVEAudioCapture*)param;
+		if (pThis)
+		{
+			pThis->CaptureThreadProc();
+		}
+		return 0;
+	}
+
 
 	void CWAVEAudioCapture::CaptureThreadProc()
 	{
@@ -266,7 +269,11 @@ namespace MediaFileRecorder
 		{
 			WaitForSingleObject(hWaitableTimer, INFINITE);
 			if (!m_bRunning)
+			{
+				Info("CWAVEAudioCapture: CaptureThreadProc receives stop signal");
 				break;
+			}
+				
 
 			while (true)
 			{
@@ -291,21 +298,21 @@ namespace MediaFileRecorder
 					MMRESULT res = waveInUnprepareHeader(m_hWaveIn, &(m_WaveHeaderIn[nBufferIndex]), sizeof(WAVEHDR));
 					if (res != MMSYSERR_NOERROR)
 					{
-						OutputDebugStringA("waveInUnprepareHeader failed \n");
+						Error("CWAVEAudioCapture: waveInUnprepareHeader failed, index: %d", nBufferIndex);
 						goto EXIT;
 					}
 
 					res = waveInPrepareHeader(m_hWaveIn, &m_WaveHeaderIn[nBufferIndex], sizeof(WAVEHDR));
 					if (res != MMSYSERR_NOERROR)
 					{
-						OutputDebugStringA("waveInPrepareHeader failed \n");
+						Error("CWAVEAudioCapture: waveInPrepareHeader failed, index: %d", nBufferIndex);
 						goto EXIT;
 					}
 					
 					res = waveInAddBuffer(m_hWaveIn, &m_WaveHeaderIn[nBufferIndex], sizeof(WAVEHDR));
 					if (res != MMSYSERR_NOERROR)
 					{
-						OutputDebugStringA("waveInAddBuffer failed \n");
+						Error("CWAVEAudioCapture: waveInAddBuffer failed, index: %d", nBufferIndex);
 						goto EXIT;
 					}
 

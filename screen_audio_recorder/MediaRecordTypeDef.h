@@ -116,9 +116,9 @@ namespace MediaFileRecorder
 	struct RECORD_INFO
 	{
 		char file_name[1024];
-		bool is_record_video;
-		bool is_record_mic;
-		bool is_record_speaker;
+		BOOL is_record_video;
+		BOOL is_record_mic;
+		BOOL is_record_speaker;
 		RECT video_capture_rect;
 		int  video_dst_width;
 		int  video_dst_height;
@@ -136,5 +136,16 @@ namespace MediaFileRecorder
 			quality = UNKOWN;
 		}
 	};
+
+
+	enum SDK_LOG_LEVEL
+	{
+		LOG_DEBUG = 0,
+		LOG_INFO,
+		LOG_WARNING,
+		LOG_ERROR
+	};
+
+	typedef void(__cdecl *sdk_log_cb_t)(SDK_LOG_LEVEL level, const wchar_t* msg);
 }
 #endif
