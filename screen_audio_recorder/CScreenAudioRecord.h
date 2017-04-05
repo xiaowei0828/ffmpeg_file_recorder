@@ -29,7 +29,8 @@ namespace MediaFileRecorder
 	private:
 		int CheckRecordInfo();
 		void CleanUp();
-			;
+		void StartCapture(int& ret);
+		void StopCapture();
 	private:
 		enum RECORD_STATE
 		{
@@ -37,6 +38,9 @@ namespace MediaFileRecorder
 			RECORDING,
 			SUSPENDED,
 		};
+		bool m_bMicRecording;
+		bool m_bSpeakerRecording;
+		bool m_bVideoRecording;
 		RECORD_STATE m_nRecordState;
 		RECORD_INFO m_stRecordInfo;
 		IMediaFileRecorder* m_pFileRecorder;

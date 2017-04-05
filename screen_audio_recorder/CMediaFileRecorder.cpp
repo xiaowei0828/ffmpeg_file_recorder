@@ -9,19 +9,17 @@ void av_log_cb(void* data, int level, const char* msg, va_list args)
 	char log[1024] = { 0 };
 	vsprintf_s(log, msg, args);
 	if (level > AV_LOG_INFO)
-		MediaFileRecorder::Debug(log);
+		MediaFileRecorder::call_log_func(MediaFileRecorder::LOG_DEBUG, msg, args);
 	else if (level == AV_LOG_INFO)
-		MediaFileRecorder::Info(log);
+		MediaFileRecorder::call_log_func(MediaFileRecorder::LOG_INFO, msg, args);
 	else if (level == AV_LOG_WARNING)
-		MediaFileRecorder::Warning(log);
+		MediaFileRecorder::call_log_func(MediaFileRecorder::LOG_WARNING, msg, args);
 	else if (level < AV_LOG_WARNING)
-		MediaFileRecorder::Error(log);
+		MediaFileRecorder::call_log_func(MediaFileRecorder::LOG_ERROR, msg, args);
 }
 
 namespace MediaFileRecorder
 {
-	
-
 	CMediaFileRecorder::CMediaFileRecorder()
 		:m_bInited(false),
 		m_pFormatCtx(NULL),
@@ -354,6 +352,7 @@ namespace MediaFileRecorder
 			av_write_trailer(m_pFormatCtx);
 			UnInitVideoRecord();
 			UnInitAudioRecord();
+			Info("MediaFileRecorder: total time: %lld", m_nDuration);
 			CleanUp();
 			m_bInited = false;
 			return 0;

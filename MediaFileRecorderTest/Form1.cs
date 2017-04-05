@@ -32,8 +32,8 @@ namespace MediaFileRecorderTest
 
             string fileName = "test.mp4";
             MediaFileRecorder.RECT video_capture_rect;
-            video_capture_rect.left = 0;
-            video_capture_rect.top = 0;
+            video_capture_rect.left = 500;
+            video_capture_rect.top = 500;
             video_capture_rect.right = 1920;
             video_capture_rect.bottom = 1080;
             m_stRecordInfo.file_name = new byte[1024];
@@ -54,13 +54,26 @@ namespace MediaFileRecorderTest
         {
             if(!m_bStarted)
             {
-               int ret = MediaFileRecorder.MR_StartRecord(m_RecordObject);
-                if(ret == 0)
-                {
-                    Button s = (Button)sender;
-                    s.Text = "结束";
-                    m_bStarted = true;
-                }
+                int ret = MediaFileRecorder.MR_StartRecord(m_RecordObject);
+                if ((ret & (int)MediaFileRecorder.RECORD_START_RESULT.STATE_NOT_RIGHT) != 0)
+                    System.Diagnostics.Debug.WriteLine("Start record: state not right");
+                else if((ret & (int)MediaFileRecorder.RECORD_START_RESULT.PARAMETER_INVALID) != 0)
+                    System.Diagnostics.Debug.WriteLine("Start record: parameter invalid");
+               else if((ret & (int)MediaFileRecorder.RECORD_START_RESULT.START_SCRREEN_CAPTURE_FAILED) != 0)
+                    System.Diagnostics.Debug.WriteLine("Start record: start screen capture failed");
+                else if((ret & (int)MediaFileRecorder.RECORD_START_RESULT.START_MIC_CAPTURE_FAILED) != 0)
+                    System.Diagnostics.Debug.WriteLine("Start record: start mic capture failed");
+                else if((ret & (int)MediaFileRecorder.RECORD_START_RESULT.START_SPEAKER_CAPTURE_FAILED) != 0)
+                    System.Diagnostics.Debug.WriteLine("Start record: start speaker capture failed");
+                else if((ret & (int)MediaFileRecorder.RECORD_START_RESULT.INIT_MEDIA_FILE_RECORDER_FAILED) != 0)
+                    System.Diagnostics.Debug.WriteLine("Start record: init media file recorder failed");
+                else if((ret & (int)MediaFileRecorder.RECORD_START_RESULT.START_MEDIA_FILE_RECORDER_FAILED) != 0)
+                    System.Diagnostics.Debug.WriteLine("Start record: start media file recorder failed");
+
+
+                Button s = (Button)sender;
+                s.Text = "结束";
+                m_bStarted = true;
             }
             else
             {
@@ -98,9 +111,10 @@ namespace MediaFileRecorderTest
             }
         }
 
-        private void MR_LogCallback(int level, [MarshalAs(UnmanagedType.LPWStr)]string log)
+        private void MR_LogCallback(MediaFileRecorder.SDK_LOG_LEVEL level, [MarshalAs(UnmanagedType.LPWStr)]string log)
         {
-            System.Diagnostics.Debug.Print(log);
+            if(level > MediaFileRecorder.SDK_LOG_LEVEL.LOG_DEBUG)
+                System.Diagnostics.Debug.Print(log);
         }
 
     }

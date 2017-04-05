@@ -112,6 +112,8 @@ namespace MediaFileRecorder
 		
 		m_bCapturing = true;
 
+		Info("WASAudioCapture: Start capture succeed, type: %d", m_nDevType);
+
 		return 0;
 	}
 

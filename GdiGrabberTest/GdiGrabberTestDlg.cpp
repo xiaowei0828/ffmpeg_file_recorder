@@ -200,7 +200,7 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 
 		MediaFileRecorder::RECORD_INFO record_info;
 		
-		//strcpy_s(record_info.file_name, "test.mp4");
+		strcpy_s(record_info.file_name, "test.mp4");
 		record_info.video_capture_rect = grab_rect;
 		record_info.video_dst_width = CAPTURE_WIDTH;
 		record_info.video_dst_height = CAPTURE_HEIGHT;

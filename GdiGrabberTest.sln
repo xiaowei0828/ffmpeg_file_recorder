@@ -8,6 +8,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "screen_audio_recorder", "screen_audio_recorder\screen_audio_recorder.vcxproj", "{B7A5D234-8926-419A-8C1C-1D2DC948F56B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaFileRecorderTest", "MediaFileRecorderTest\MediaFileRecorderTest.csproj", "{08367088-4113-436F-A46C-7A6F01EDEE1F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B7A5D234-8926-419A-8C1C-1D2DC948F56B} = {B7A5D234-8926-419A-8C1C-1D2DC948F56B}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

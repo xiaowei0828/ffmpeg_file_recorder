@@ -38,11 +38,27 @@ namespace MediaFileRecorderTest
             public QUALITY quality;
         }
 
-        [DllImport("screen_audio_recorder.dll", EntryPoint = "MR_Add", CallingConvention = CallingConvention.Cdecl)]
-        public static extern int MR_Add(int a, int b);
+        public enum RECORD_START_RESULT
+        {
+            STATE_NOT_RIGHT = 0x1,
+            PARAMETER_INVALID = 0x2,
+            START_SCRREEN_CAPTURE_FAILED = 0x4,
+            START_MIC_CAPTURE_FAILED = 0x8,
+            START_SPEAKER_CAPTURE_FAILED = 0x10,
+            INIT_MEDIA_FILE_RECORDER_FAILED = 0x20,
+            START_MEDIA_FILE_RECORDER_FAILED = 0x40
+        }
+
+        public enum SDK_LOG_LEVEL
+        {
+            LOG_DEBUG = 0,
+            LOG_INFO,
+            LOG_WARNING,
+            LOG_ERROR
+        };
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        public delegate void MR_LogCallback(int level, [MarshalAs(UnmanagedType.LPWStr)]string log);
+        public delegate void MR_LogCallback(SDK_LOG_LEVEL level, [MarshalAs(UnmanagedType.LPWStr)]string log);
         [DllImport("screen_audio_recorder.dll", EntryPoint = "MR_SetLogCallBack", CallingConvention = CallingConvention.Cdecl)]
         public static extern void MR_SetLogCallBack(MR_LogCallback cb);
 

@@ -89,6 +89,8 @@ namespace MediaFileRecorder
 
 		m_bCapturing = true;
 
+		Info("WAVEAudioCapture: Start capture succeed!");
+
 		return 0;
 	}
 

@@ -5,7 +5,10 @@ namespace MediaFileRecorder
 {
 
 	CScreenAudioRecord::CScreenAudioRecord()
-		:m_nRecordState(NOT_BEGIN)
+		:m_nRecordState(NOT_BEGIN),
+		m_bMicRecording(false),
+		m_bSpeakerRecording(false),
+		m_bVideoRecording(false)
 	{
 		m_pFileRecorder = CreateMediaFileRecorder();
 		m_pScreenGrabber = CreateScreenGrabber();
@@ -108,35 +111,7 @@ namespace MediaFileRecorder
 			return ret;
 		}
 
-		if (m_stRecordInfo.is_record_mic)
-		{
-			if (m_pMicAudioCapturer->StartCapture() != 0)
-			{
-				Error("Start mic capture failed");
-				ret |= START_MIC_CAPTURE_FAILED;
-			}
-		}
-
-		if (m_stRecordInfo.is_record_speaker)
-		{
-			if (m_pSpeakerAudioCapturer->StartCapture())
-			{
-				Error("Start speaker capture failed");
-				ret |= START_SPEAKER_CAPTURE_FAILED;
-			}
-		}
-
-		if (m_stRecordInfo.is_record_video)
-		{
-			m_pScreenGrabber->SetGrabFrameRate(m_stRecordInfo.video_frame_rate);
-			m_pScreenGrabber->SetGrabRect(m_stRecordInfo.video_capture_rect);
-
-			if (m_pScreenGrabber->StartGrab() != 0)
-			{
-				Error("Start screen capture failed");
-				ret |= START_SCRREEN_CAPTURE_FAILED;
-			}
-		}
+		StartCapture(ret);
 
 		if (m_pFileRecorder->Init(m_stRecordInfo) != 0)
 		{
@@ -166,7 +141,10 @@ namespace MediaFileRecorder
 			Error("SuspendRecord: State not right, state: %d", m_nRecordState);
 			return -1;
 		}
+		StopCapture();
+		m_pFileRecorder->Stop();
 		m_nRecordState = SUSPENDED;
+		Info("Suspend record!");
 		return 0;
 	}
 
@@ -177,8 +155,12 @@ namespace MediaFileRecorder
 			Error("ResumeRecord: State not right,state: %d", m_nRecordState);
 			return -1;
 		}
+		int ret = 0;
+		StartCapture(ret);
+		m_pFileRecorder->Start();
 		m_nRecordState = RECORDING;
-		return 0;
+		Info("Resume record!");
+		return ret;
 	}
 
 	int CScreenAudioRecord::StopRecord()
@@ -188,9 +170,9 @@ namespace MediaFileRecorder
 			Error("StopRecord: State not right,state: %d", m_nRecordState);
 			return -1;
 		}
-
 		CleanUp();
 		m_nRecordState = NOT_BEGIN;
+		Info("Stop record!");
 		return 0;
 	}
 
@@ -220,11 +202,65 @@ namespace MediaFileRecorder
 
 	void CScreenAudioRecord::CleanUp()
 	{
-		m_pMicAudioCapturer->StopCapture();
-		m_pSpeakerAudioCapturer->StopCapture();;
-		m_pScreenGrabber->StopGrab();
+		StopCapture();
 		m_pFileRecorder->Stop();
 		m_pFileRecorder->UnInit();
+	}
+
+	void CScreenAudioRecord::StartCapture(int& ret)
+	{
+		if (m_stRecordInfo.is_record_mic)
+		{
+			m_bMicRecording = (m_pMicAudioCapturer->StartCapture() == 0);
+			if (!m_bMicRecording)
+			{
+				Error("Start mic capture failed");
+				ret |= START_MIC_CAPTURE_FAILED;
+			}
+		}
+
+		if (m_stRecordInfo.is_record_speaker)
+		{
+			m_bSpeakerRecording = (m_pSpeakerAudioCapturer->StartCapture() == 0);
+			if (!m_bSpeakerRecording)
+			{
+				Error("Start speaker capture failed");
+				ret |= START_SPEAKER_CAPTURE_FAILED;
+			}
+		}
+
+		if (m_stRecordInfo.is_record_video)
+		{
+			m_pScreenGrabber->SetGrabFrameRate(m_stRecordInfo.video_frame_rate);
+			m_pScreenGrabber->SetGrabRect(m_stRecordInfo.video_capture_rect);
+
+			m_bVideoRecording = (m_pScreenGrabber->StartGrab() == 0);
+			if (!m_bVideoRecording)
+			{
+				Error("Start screen capture failed");
+				ret |= START_SCRREEN_CAPTURE_FAILED;
+			}
+		}
+	}
+
+	void CScreenAudioRecord::StopCapture()
+	{
+		if (m_bMicRecording)
+		{
+			m_pMicAudioCapturer->StopCapture();
+			m_bMicRecording = false;
+		}
+		if (m_bSpeakerRecording)
+		{
+			m_pSpeakerAudioCapturer->StopCapture();
+			m_bSpeakerRecording = false;
+		}
+			
+		if (m_bVideoRecording)
+		{
+			m_pScreenGrabber->StopGrab();
+			m_bVideoRecording = false;
+		}	
 	}
 
 	IScreenAudioRecord* CreateScreenAudioRecorder()

@@ -112,6 +112,8 @@ namespace MediaFileRecorder {
 		StartGrabThread();
 
 		started_ = true;
+
+		Info("ScreenGdiGrabber: start grab succeed!");
 		return 0;
 	}
 
