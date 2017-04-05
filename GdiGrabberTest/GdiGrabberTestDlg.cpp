@@ -90,8 +90,8 @@ END_MESSAGE_MAP()
 
 #define CAPTURE_LEFT 0
 #define CAPTURE_TOP 0
-#define CAPTURE_WIDTH 1920
-#define CAPTURE_HEIGHT 1080
+#define CAPTURE_WIDTH 100
+#define CAPTURE_HEIGHT 100
 #define CAPTURE_FRAME_RATE 20
 
 // CGdiGrabberTestDlg 消息处理程序
@@ -202,8 +202,8 @@ void CGdiGrabberTestDlg::OnBnClickedButtonStart()
 		
 		strcpy_s(record_info.file_name, "test.mp4");
 		record_info.video_capture_rect = grab_rect;
-		record_info.video_dst_width = CAPTURE_WIDTH;
-		record_info.video_dst_height = CAPTURE_HEIGHT;
+		record_info.video_dst_width = 1920;
+		record_info.video_dst_height = 1080;
 		record_info.video_frame_rate= CAPTURE_FRAME_RATE;
 		record_info.quality = MediaFileRecorder::NORMAL;
 		record_info.is_record_speaker = true;

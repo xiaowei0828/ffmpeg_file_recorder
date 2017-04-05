@@ -66,6 +66,14 @@ namespace MediaFileRecorder
 				return -1;
 			}
 
+			if (m_stRecordInfo.video_dst_width < 4)
+				m_stRecordInfo.video_dst_width = 4;
+			if (m_stRecordInfo.video_dst_height < 4)
+				m_stRecordInfo.video_dst_height = 4;
+
+			m_stRecordInfo.video_dst_width = (m_stRecordInfo.video_dst_width / 4) * 4;
+			m_stRecordInfo.video_dst_height = (m_stRecordInfo.video_dst_height / 4) * 4;
+
 			if (m_stRecordInfo.video_dst_width <= 0 || m_stRecordInfo.video_dst_height <= 0)
 			{
 				Error("Target width or height not right, dst width: %d, dst height: %d",
