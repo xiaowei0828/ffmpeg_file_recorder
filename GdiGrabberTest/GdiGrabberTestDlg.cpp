@@ -90,8 +90,8 @@ END_MESSAGE_MAP()
 
 #define CAPTURE_LEFT 0
 #define CAPTURE_TOP 0
-#define CAPTURE_WIDTH 100
-#define CAPTURE_HEIGHT 100
+#define CAPTURE_WIDTH 1920
+#define CAPTURE_HEIGHT 1080
 #define CAPTURE_FRAME_RATE 20
 
 // CGdiGrabberTestDlg 消息处理程序
